@@ -1,6 +1,6 @@
 # audio-object
-A thin wrapper for sub-graphs of AudioNodes that exposes their AudioParams as
-simple getter/setters on a vanilla JS object and updates their values using.
+A wrapper for sub-graphs of AudioNodes that exposes their AudioParams as
+getter/setters on an object.
 
 ## The problem
 
@@ -9,21 +9,21 @@ and AudioParams have some idiosyncrasies that relate to the way they represent
 things that are happening in a separate thread.
 
 Changes AudioParam values cannot be observed, either by
-<code>Object.observe</code> nor by redefining as getters/setters, but only by
+<code>Object.observe</code> nor by redefining them as getters/setters, but only by
 polling. This is for a very good reason: a-rate params can change at the sample
-rate of the audio system – potentially 192,000 times a second – and observing
-them would have your JavaScript tripping over itself.
+rate of the audio system – potentially 192,000 times a second with a good audio
+card – and observing them would have your JavaScript tripping over itself.
 
 AudioObject provides an observable interface to sub-graphs of AudioNodes and
 AudioParams.
 
 AudioParam values are polled at the browser frame rate for just the duration of
-any transition, and their values exposed as properties of AudioObject.
+any transition, and their values exposed as properties of an AudioObject.
 
-## AudioObject(input, output, params);
+## AudioObject(inputNode, outputNode, params);
 
-Here is a simple example of a compressor and a gain stage wrapped into a single
-object:
+Here is a simple example of a compressor and a gain wrapped into a single
+audio object:
 
     function createCompressGain() {
         var compressor = audio.createCompressor();
@@ -38,10 +38,10 @@ object:
         });
     }
 
-    effect = createCompressGain();
+    var effect = createCompressGain();
 
 
-That results in a 'flat' object <code>effect</code> that looks like this:
+That results in a 'flat' <code>effect</code> object that looks like this:
 
     {
         threshold: -20,
@@ -75,11 +75,15 @@ sub-graph.
 
 ### Functions
 
+#### AudioObject.isAudioObject(object)
+
+Returns <code>true</code> if <code>object</code> is an instance of <code>AudioObject</code>.
+
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
 Used by the <code>AudioObject()</code>, this functions takes a map of audio
-params and defines getters and setters on <code>object</code> to control the
-param values.
+params and defines getters and setters on <code>object</code> that are bound to
+the param values.
 
     var object = {};
 
@@ -95,16 +99,12 @@ Returns <code>object</code>.
 As <code>.defineAudioProperties()</code>, but defines a single property with
 name <code>name</code>. Returns <code>object</code>.
 
-#### AudioObject.nodes
+### Properties
 
-A WeakMap where WebAudio graph nodes are stored. Normally you will not need to
-touch this. It is used internally by <code>.connect()</code> and
-<code>.disconnect()</code>. It is also useful for debugging.
+#### AudioObject.inputs = inputs;
+#### AudioObject.outputs = outputs;
 
-	var effect = createCompressGain();
-    var data = AudioObject.nodes.get(effect);
+Two WeakMaps where input and output nodes for audio objects are stored. Normally
+you will not need to touch these. It is used internally by <code>.connect()</code> and
+<code>.disconnect()</code> (although they can also be useful for debugging).
 
-    // {
-    //     input: compressorNode,
-    //     output: gainNode
-    // }
