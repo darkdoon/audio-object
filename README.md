@@ -55,7 +55,7 @@ parameter <code>code</code> can be either <code>'linear'</code> (the default) or
 <code>'exponential'</code>. Exponential curves can only be used on positive
 non-zero values.
 
-    effect.automate('level', 0, 0.012)
+    effect.automate('level', 0, 1.2)
 
 #### .connect(audioObject | audioNode)
 
