@@ -113,8 +113,8 @@ name <code>name</code>. Returns <code>object</code>.
 
 ### Properties
 
-#### AudioObject.inputs = inputs;
-#### AudioObject.outputs = outputs;
+#### AudioObject.inputs = inputs;<br/>
+AudioObject.outputs = outputs;
 
 WeakMaps where input and output nodes for audio objects are stored. Normally
 you will not need to touch these. They are used internally by
