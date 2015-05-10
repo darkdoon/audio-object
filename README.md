@@ -57,6 +57,9 @@ non-zero values.
 
     effect.automate('level', 0, 1.2)
 
+Properties of the audioObject are updated at the browser's frame rate during an
+automation.
+
 #### .connect(audioObject | audioNode)
 
 Like <code>node1.connect(node2)</code>, but an audioObject will accept either
