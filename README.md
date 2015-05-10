@@ -55,17 +55,30 @@ parameter <code>code</code> can be either <code>'linear'</code> (the default) or
 <code>'exponential'</code>. Exponential curves can only be used on positive
 non-zero values.
 
+    effect.automate('level', 0, 0.012)
+
 #### .connect(audioObject | audioNode)
 
+Like <code>node1.connect(node2)</code>, but an audioObject will accept either
+a Web Audio node or another audioObject to connect to.
+
+The outputNode that was passed into the <code>AudioObject()</code> constructor
+is connected directly to the audioNode or audioObject's input node.
+
+    var delay = audioContext.createDelay();
+    effect.connect(delay);
 
 #### .disconnect()
 
+Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
+outputNode.
 
+    effect.disconnect(delay);
 
 #### .destroy()
 
-Destroy is a noop by default. Override it to disconnect all the nodes in your
-sub-graph.
+Destroy is a noop by default. Override it so that when it is called it destroys
+your audio graph.
 
 ### Functions
 
