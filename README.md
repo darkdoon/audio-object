@@ -35,7 +35,7 @@ audio object:
     var effect = createCompressGain();
 
 
-Now <code>effect</code> is 'flat' object that looks like this:
+Now the audioObject <code>effect</code> is a 'flat' object with properties:
 
     {
         threshold: -20,
@@ -43,9 +43,9 @@ Now <code>effect</code> is 'flat' object that looks like this:
         level: 1
     }
 
-Easy to JSON-ify. Easy to observe.
+Easy to JSON-ify. Easy to observe. It also has a few methods.
 
-### Methods
+### audioObject methods
 
 #### .automate(name, value, duration, [curve])
 
@@ -80,7 +80,7 @@ outputNode.
 Destroy is a noop by default. Override it so that when it is called it destroys
 your audio graph.
 
-### Functions
+### AudioObject Functions
 
 #### AudioObject.isAudioObject(object)
 
