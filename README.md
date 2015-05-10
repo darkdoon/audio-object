@@ -91,10 +91,11 @@ Returns <code>true</code> if <code>object</code> is an instance of <code>AudioOb
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
-This functions takes a map of audio params and defines getters and setters on
-<code>object</code> that are bound to their values. It's used by the
-<code>AudioObject()</code> constructor to set up and audio object.
-
+Echoes the JS function <code>Object.defineProperties()</code>, but
+<code>.defineAudioProperties()</code> takes a map of audio params and defines
+getters and setters on <code>object</code> that are bound to the values of those
+params. It's used by the <code>AudioObject()</code> constructor to set up an
+audio object.
 
     var object = {};
 
