@@ -35,7 +35,7 @@ audio object:
     var effect = createCompressGain();
 
 
-That results in a 'flat' <code>effect</code> object that looks like this:
+<code>effect</code> is 'flat' object that looks like this:
 
     {
         threshold: -20,
