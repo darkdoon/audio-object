@@ -51,7 +51,7 @@ Easy to JSON-ify. Easy to observe. It also has a few methods.
 
 Automate a property. The named property will ramp to the new <code>value</code>
 from it's current value over <code>duration</code> (in seconds). The optional
-parameter <code>code</code> can be either <code>'linear'</code> (the default) or
+parameter <code>curve</code> can be either <code>'linear'</code> (the default) or
 <code>'exponential'</code>. Exponential curves can only be used on positive
 non-zero values.
 
