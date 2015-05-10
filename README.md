@@ -1,24 +1,16 @@
 # audio-object
-A wrapper for sub-graphs of AudioNodes that exposes their AudioParams as
+A wrapper for graphs of AudioNodes that exposes their AudioParams as
 getter/setters on an object.
 
 ## The problem
 
-The WebAudio graph was always intended to be wrapped and built upon. AudioNodes
-and AudioParams have some idiosyncrasies that relate to the way they represent
-things that are happening in a separate thread.
+In Web Audio, changes to AudioParam values are difficult to observe.
+Neither <code>Object.observe</code> nor redefining them as getters/setters will
+work (for good performance reasons, as observers could potentially be called
+at the sample rate).
 
-Changes AudioParam values cannot be observed, either by
-<code>Object.observe</code> nor by redefining them as getters/setters, but only by
-polling. This is for a very good reason: a-rate params can change at the sample
-rate of the audio system – potentially 192,000 times a second with a good audio
-card – and observing them would have your JavaScript tripping over itself.
-
-AudioObject provides an observable interface to sub-graphs of AudioNodes and
+AudioObject provides an observable interface to graphs of AudioNodes and
 AudioParams.
-
-AudioParam values are polled at the browser frame rate for just the duration of
-any transition, and their values exposed as properties of an AudioObject.
 
 ## AudioObject(inputNode, outputNode, params);
 
@@ -81,9 +73,10 @@ Returns <code>true</code> if <code>object</code> is an instance of <code>AudioOb
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
-Used by the <code>AudioObject()</code>, this functions takes a map of audio
-params and defines getters and setters on <code>object</code> that are bound to
-the param values.
+This functions takes a map of audio params and defines getters and setters on
+<code>object</code> that are bound to their values. It's used by the
+<code>AudioObject()</code> constructor to set up and audio object.
+
 
     var object = {};
 
@@ -104,7 +97,7 @@ name <code>name</code>. Returns <code>object</code>.
 #### AudioObject.inputs = inputs;
 #### AudioObject.outputs = outputs;
 
-Two WeakMaps where input and output nodes for audio objects are stored. Normally
-you will not need to touch these. It is used internally by <code>.connect()</code> and
-<code>.disconnect()</code> (although they can also be useful for debugging).
+WeakMaps where input and output nodes for audio objects are stored. Normally
+you will not need to touch these. They are used internally by
+<code>.connect()</code> and <code>.disconnect()</code>.
 
