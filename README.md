@@ -10,7 +10,8 @@ work (for good performance reasons, as observers could potentially be called
 at the sample rate).
 
 AudioObject provides an observable interface to graphs of AudioNodes and
-AudioParams.
+AudioParams. Observers are notified at the browser's frame rate. That's good for
+creating UIs.
 
 ## AudioObject(inputNode, outputNode, params);
 
