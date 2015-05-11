@@ -130,7 +130,7 @@ Returns <code>object</code>.
 
 #### AudioObject.inputs<br/>AudioObject.outputs
 
-WeakMaps where input and output nodes for audio objects are stored. Normally
+WeakMaps where inputNode and outputNode for audio objects are stored. Normally
 you will not need to touch these. They are used internally by
 <code>.connect()</code> and <code>.disconnect()</code>.
 
