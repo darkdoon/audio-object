@@ -98,9 +98,9 @@ param. (As with <code>.defineProperties()</code>, <code>enumerable</code> and
 default.)
 
 <code>.defineAudioProperties()</code> takes a map of audio params and defines
-getters and setters on <code>object</code> that are bound to the values of those
-params. It's used by the <code>AudioObject()</code> constructor to set up an
-audio object.
+properties on <code>object</code> that are bound to the values of those params.
+It's used by the <code>AudioObject()</code> constructor to set up an audio
+object.
 
     var object = {};
 
