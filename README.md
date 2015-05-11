@@ -94,7 +94,7 @@ Returns <code>true</code> if <code>object</code> is an instance of <code>AudioOb
 Echoes the JS function <code>Object.defineProperties()</code>, but an audio
 property is defined as a getter/setter that is bound to the value of an audio
 param. As with <code>.defineProperties()</code>, <code>enumerable</code> and
-<code>configurable</code> can be set. They are set to <code>true</code> by
+<code>configurable</code> can be set, although they are <code>true</code> by
 default.
 
 <code>.defineAudioProperties()</code> takes a map of audio params and defines
