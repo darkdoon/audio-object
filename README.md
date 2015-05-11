@@ -61,7 +61,7 @@ non-zero values.
 Properties of the audioObject are updated at the browser's frame rate during an
 automation.
 
-#### .connect(audioNode || audioObject)
+#### .connect(audioNode | audioObject)
 
 Like <code>node1.connect(node2)</code>, but an audioObject will accept either
 a Web Audio node or another audioObject to connect to.
