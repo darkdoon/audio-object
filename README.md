@@ -135,4 +135,4 @@ WeakMaps where inputNode and outputNode for audio objects are stored. Normally
 you will not need to touch these. They are used internally by audioObject
 <code>.connect()</code> and <code>.disconnect()</code>.
 
-    var effectInputNode = AudioObject.inputs.get(effect);
+    var inputNode = AudioObject.inputs.get(audioObject);
