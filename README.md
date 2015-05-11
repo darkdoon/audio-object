@@ -66,8 +66,9 @@ automation.
 Like <code>node1.connect(node2)</code>, but an audioObject will accept either
 a Web Audio node or another audioObject to connect to.
 
-The outputNode that was passed into the <code>AudioObject()</code> constructor
-is connected directly to the audioNode or the audioObject's input node.
+The outputNode (that was passed into the <code>AudioObject()</code> when the
+audioObject was created) is connected directly to the audioNode or the
+audioObject's input node.
 
     var delay = audioContext.createDelay();
     effect.connect(delay);
