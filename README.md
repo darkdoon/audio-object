@@ -35,7 +35,8 @@ audio object:
     var effect = createCompressGain();
 
 
-Now the audioObject <code>effect</code> is a 'flat' object with properties:
+An audioObject does not expose Audio Params. <code>effect</code> is a 'flat'
+object with properties:
 
     {
         threshold: -20,
