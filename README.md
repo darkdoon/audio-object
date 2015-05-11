@@ -98,9 +98,11 @@ object.
 
 Echoes the JS function <code>Object.defineProperties()</code>, but an audio
 property is defined as a getter/setter that is bound to the value of an audio
-param. (As with <code>.defineProperties()</code>, <code>enumerable</code> and
+param. As with <code>.defineProperties()</code>, <code>enumerable</code> and
 <code>configurable</code> can be set, although they are <code>true</code> by
-default.)
+default. A property definition can also define <code>curve</code> which, if
+<code>object</code> is an audioObject, is the curve will be used by
+<code>.automate()</code> by default.
 
     var object = {};
 
