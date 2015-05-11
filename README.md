@@ -14,7 +14,7 @@ AudioParams. Changes to the properties of an audioObject are reflected
 immediately in the audio graph, but observers of those properties are notified
 of the changes at the browser's frame rate. That's good for creating UIs.
 
-## AudioObject(inputNode, outputNode, params);
+## AudioObject(audioContext, inputNode, outputNode, params);
 
 Here is a simple example of a compressor and a gain wrapped into a single
 audio object:
@@ -25,7 +25,7 @@ audio object:
 
         compressor.connect(gain);
 
-        return AudioObject(compressor, gain, {
+        return AudioObject(audioContext, compressor, gain, {
             threshold: compressor.threshold,
             ratio: compressor.ratio,
             level: gain.gain
