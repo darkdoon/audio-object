@@ -132,7 +132,8 @@ Returns <code>object</code>.
 #### AudioObject.inputs<br/>AudioObject.outputs
 
 WeakMaps where inputNode and outputNode for audio objects are stored. Normally
-you will not need to touch these. They are used internally by audioObject
-<code>.connect()</code> and <code>.disconnect()</code>.
+you will not need to touch these, but they can be useful for debugging. They are
+used internally by audioObject <code>.connect()</code> and
+<code>.disconnect()</code>.
 
     var inputNode = AudioObject.inputs.get(audioObject);
