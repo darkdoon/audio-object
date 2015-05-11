@@ -74,9 +74,7 @@
 		});
 
 		Object.defineProperty(object, name, {
-			get: function() {
-				return value;
-			},
+			get: function() { return value; },
 
 			set: function(n) {
 				// Set the value as the old value of the message and update
@@ -93,8 +91,8 @@
 				ramp(param, n, audio.currentTime, duration);
 			},
 
-			enumerable: true,
-			configurable: true
+			enumerable: isDefined(data.enumerable) ? data.enumerable : true,
+			configurable: isDefined(data.configurable) ? data.configurable : true
 		});
 
 		return object;
