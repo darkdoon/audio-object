@@ -109,7 +109,7 @@ audioObject, is the curve to be used by <code>.automate()</code> by default.)
         // Pass in an Audio Param directly
         ratio: compressor.ratio,
         
-        // Or pass in an object to define the property
+        // Or pass in an object to define the audio property
         level: {
             param: gain.gain,
             curve: 'exponential',
