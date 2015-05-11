@@ -122,7 +122,9 @@ Returns <code>object</code>.
 #### AudioObject.defineAudioProperty(object, name, audioContext, audioParam)
 
 As <code>.defineAudioProperties()</code>, but defines a single property with
-name <code>name</code>. Returns <code>object</code>.
+name <code>name</code>.
+
+Returns <code>object</code>.
 
 ### Properties
 
