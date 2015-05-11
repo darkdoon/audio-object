@@ -91,22 +91,29 @@ Returns <code>true</code> if <code>object</code> is an instance of <code>AudioOb
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
+<code>.defineAudioProperties()</code> takes a map of audio params and defines
+properties on <code>object</code> that are bound to the values of those params.
+It's used by the <code>AudioObject()</code> constructor to set up an audio
+object.
+
 Echoes the JS function <code>Object.defineProperties()</code>, but an audio
 property is defined as a getter/setter that is bound to the value of an audio
 param. (As with <code>.defineProperties()</code>, <code>enumerable</code> and
 <code>configurable</code> can be set, although they are <code>true</code> by
 default.)
 
-<code>.defineAudioProperties()</code> takes a map of audio params and defines
-properties on <code>object</code> that are bound to the values of those params.
-It's used by the <code>AudioObject()</code> constructor to set up an audio
-object.
-
     var object = {};
 
     AudioObject.defineAudioProperties(object, audioContext, {
+        // Pass in an Audio Param directly
         ratio: compressor.ratio,
-        level: gain.gain
+        
+        // Or pass in an object to define the property
+        level: {
+            param: gain.gain,
+            curve: 'exponential',
+            enumerable: false
+        }
     });
 
 Returns <code>object</code>.
