@@ -148,8 +148,14 @@
 		return prototype.isPrototypeOf(object);
 	}
 
-	function AudioObject(audio, input, output, params) {
-		var effect = Object.create(prototype);
+	function AudioObject(audio, input, output, params, properties) {
+		if (!(this && AudioObject.prototype.isPrototypeOf(this))) {
+			// If this is not an instance of AudioObject, it has been called
+			// without the new keyword. Do that now. Also allows this constructor
+			// to be called as a build function on objects that have
+			// AudioObject.prototype anywhere in their chain.
+			return new AudioObject(audio, input, output, params, properties);
+		}
 
 		if (!(input || output)) {
 			throw new Error('AudioObject must be given an input OR output OR both.');
@@ -157,16 +163,18 @@
 
 		// Keep a reference to the input node without exposing it, so that
 		// it can be used by .connect() and .disconnect().
-		input && inputs.set(effect, input);
-		output && outputs.set(effect, output);
+		input && inputs.set(this, input);
+		output && outputs.set(this, output);
 
-		// If no params were passed in, hightail it outta here
-		if (!params) { return effect; }
+		// Define Audio Params as getters/setters
+		if (params) {
+			AudioObject.defineAudioProperties(this, audio, params);
+		}
 
-		// Define params as getters/setters
-		AudioObject.defineAudioProperties(effect, audio, params);
-
-		return effect;
+		// Define normal properties
+		if (properties) {
+			Object.defineProperties(this, properties);
+		}
 	}
 
 	AudioObject.inputs = inputs;
