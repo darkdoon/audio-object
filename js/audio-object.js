@@ -74,13 +74,15 @@
 		});
 
 		Object.defineProperty(object, name, {
-			get: function() { return value; },
+			get: data.get ?
+				function() { return data.get(value); } :
+				function() { return value; },
 
 			set: function(n) {
 				// Set the value as the old value of the message and update
 				// value with the new value.
 				message.oldValue = value;
-				value = n;
+				value = data.set ? data.set(n) : n ;
 
 				// Update the observe message and send it.
 				if (Object.getNotifier) {
@@ -149,11 +151,9 @@
 	}
 
 	function AudioObject(audio, input, output, params, properties) {
-		if (!(this && AudioObject.prototype.isPrototypeOf(this))) {
-			// If this is not an instance of AudioObject, it has been called
-			// without the new keyword. Do that now. Also allows this constructor
-			// to be called as a build function on objects that have
-			// AudioObject.prototype anywhere in their chain.
+		if (this === undefined) {
+			// If this is undefined the constructor has been called without the
+			// new keyword, or without a context applied. Do that now.
 			return new AudioObject(audio, input, output, params, properties);
 		}
 
