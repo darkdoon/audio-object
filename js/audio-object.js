@@ -151,7 +151,7 @@
 	}
 
 	function AudioObject(audio, input, output, params, properties) {
-		if (this === undefined) {
+		if (this === undefined || this === window) {
 			// If this is undefined the constructor has been called without the
 			// new keyword, or without a context applied. Do that now.
 			return new AudioObject(audio, input, output, params, properties);
