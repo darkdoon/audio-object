@@ -10,6 +10,10 @@
 
 	function noop() {}
 
+	function isDefined(val) {
+		return val !== undefined && val !== null;
+	}
+
 	function isAudioParam(object) {
 		return window.AudioParam && window.AudioParam.prototype.isPrototypeOf(object);
 	}
@@ -170,6 +174,8 @@
 		if (params) {
 			AudioObject.defineAudioProperties(this, audio, params);
 		}
+
+		Object.defineProperty(this, 'context', { value: audio });
 
 		// Define normal properties
 		if (properties) {
