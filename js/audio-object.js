@@ -137,6 +137,8 @@
 			    	inputs.get(destination).input :
 			    	destination ;
 
+			if (!input) { return; }
+
 			var output = outputs.get(this);
 
 			output.connect(input);
@@ -169,6 +171,10 @@
 		// it can be used by .connect() and .disconnect().
 		input && inputs.set(this, input);
 		output && outputs.set(this, output);
+
+		if (!output) {
+			this.connect = this.disconnect = noop;
+		}
 
 		// Define Audio Params as getters/setters
 		if (params) {
