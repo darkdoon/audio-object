@@ -222,7 +222,7 @@
 
 	AudioObject.inputs = inputs;
 	AudioObject.outputs = outputs;
-	AudioObject.ramp = rampToValue;
+	AudioObject.rampToValue = rampToValue;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
