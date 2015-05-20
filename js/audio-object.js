@@ -12,6 +12,7 @@
 	    };
 
 	var ramps = {
+	    	'step': stepRamp,
 	    	'linear': linearRamp,
 	    	'exponential': exponentialRamp
 	    };
@@ -31,18 +32,26 @@
 		automators[name] = fn;
 	}
 
+	function stepRamp(param, n, time, duration) {
+		param.setValueAtTime(n, time);
+	}
+
 	function linearRamp(param, n, time, duration) {
+		param.setValueAtTime(param.value, time);
 		param.linearRampToValueAtTime(n, time + duration);
 	}
 
 	function exponentialRamp(param, n, time, duration) {
+		param.setValueAtTime(param.value, time);
 		param.exponentialRampToValueAtTime(n, time + duration);
 	}
 
 	function rampToValue(param, value, time, duration, curve) {
+		// Curve defaults to 'step' where a duration is 0 or not defined, and
+		// otherwise to 'linear'.
+		curve = duration === 0 || duration === undefined ? 'step' : curve || 'linear' ;
 		param.cancelScheduledValues(time);
-		param.setValueAtTime(param.value, time);
-		ramps[curve || 'linear'](param, value, time, duration);
+		ramps[curve](param, value, time, duration);
 	}
 
 	function defineAudioProperty(object, name, audio, data) {
