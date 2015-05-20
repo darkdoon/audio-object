@@ -104,9 +104,9 @@
 		registerAutomator(object, name, automate);
 
 		Object.defineProperty(object, name, {
-			// Should this return value or call get() ? I think calling get is
-			// what we want but it returned value before and I'm not sure.
-			get: get,
+			// Return value because we want values that have just been set
+			// to be immediately reflected by get, to be coherent.
+			get: function() { return value; },
 
 			set: function(val) {
 				// Create a new notify message and update the value.
