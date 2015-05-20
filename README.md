@@ -52,7 +52,7 @@ An audioObject also has a few methods...
 
 #### .automate(name, value, duration, [curve])
 
-Automate a property. The named property will ramp to the new <code>value</code>
+Automate a property. The property <code>name</code> will ramp to <code>value</code>
 from it's current value over <code>duration</code> (in seconds). The optional
 parameter <code>curve</code> can be either <code>'linear'</code> (the default) or
 <code>'exponential'</code>. Exponential curves can only be used on positive
@@ -131,8 +131,8 @@ audioObject, is the curve to be used by <code>.automate()</code> by default.
             },
 
             set: function(value, time, duration, curve) {
-                AudioObject.ramp(curve, compressor.attack, value, time, duration);
-                AudioObject.ramp(curve, compressor.release, value * 6, time, duration);
+                AudioObject.rampToValue(compressor.attack, value, time, duration, curve);
+                AudioObject.rampToValue(compressor.release, value * 6, time, duration, curve);
             },
 
             curve: 'linear'

@@ -7,6 +7,10 @@
 
 	var automation = new WeakMap();
 
+	var defaults = {
+	    	duration: 0.008
+	    };
+
 	var ramps = {
 	    	'linear': linearRamp,
 	    	'exponential': exponentialRamp
@@ -28,19 +32,17 @@
 	}
 
 	function linearRamp(param, n, time, duration) {
-		param.cancelScheduledValues(time);
-		param.setValueAtTime(param.value, time);
 		param.linearRampToValueAtTime(n, time + duration);
 	}
 
 	function exponentialRamp(param, n, time, duration) {
-		param.cancelScheduledValues(time);
-		param.setValueAtTime(param.value, time);
 		param.exponentialRampToValueAtTime(n, time + duration);
 	}
 
-	function ramp(param, value, time, duration, curve) {
-		ramps[curve](param, value, time, duration);
+	function rampToValue(param, value, time, duration, curve) {
+		param.cancelScheduledValues(time);
+		param.setValueAtTime(param.value, time);
+		ramps[curve || 'linear'](param, value, time, duration);
 	}
 
 	function defineAudioProperty(object, name, audio, data) {
@@ -48,12 +50,9 @@
 
 		if (param && !isAudioParam(param)) { throw new Error('AudioObject.defineAudioProperty requires data.param to be an AudioParam. ' + data.param); }
 
-		var defaultCurve = data.curve || 'linear';
-		var defaultDuration = data.duration || 0.008;
-
 		var set = param ?
 		    	function set(value, time, duration, curve) {
-		    		ramps[curve](param, value, time, duration);
+		    		rampToValue(param, value, time, duration, curve);
 		    	} :
 		    	data.set.bind(object) ;
 
@@ -68,26 +67,6 @@
 		    	name: name
 		    };
 
-		function automate(value, duration, curve) {
-			set(value, audio.currentTime, duration || defaultDuration, curve || defaultCurve);
-			window.requestAnimationFrame(frame);
-		}
-
-		function frame() {
-			if (value === get()) { return; }
-
-			var _automate = automate;
-
-			// Castrate the calls to automate the value, then call the setter
-			// with the param's current value. Done like this, where the setter
-			// has been redefined externally it nonetheless gets called with
-			// automated values.
-			automate = noop;
-			object[name] = get();
-			automate = _automate;
-			window.requestAnimationFrame(frame);
-		}
-
 		function update(val) {
 			// Set the old value of the message to the current value before
 			// updating the value.
@@ -98,6 +77,28 @@
 			if (Object.getNotifier) {
 				Object.getNotifier(object).notify(message);
 			}
+		}
+
+		function frame() {
+			// Stop updating if value has reached param value
+			if (value === get()) { return; }
+
+			// Castrate the calls to automate the value, then call the setter
+			// with the param's current value. Done like this, where the setter
+			// has been redefined externally it nonetheless gets called with
+			// automated values.
+			var _automate = automate;
+
+			automate = noop;
+			object[name] = get();
+			automate = _automate;
+
+			window.requestAnimationFrame(frame);
+		}
+
+		function automate(value, duration, curve) {
+			set(value, audio.currentTime, duration || data.duration || defaults.duration, curve || data.curve);
+			window.requestAnimationFrame(frame);
 		}
 
 		registerAutomator(object, name, automate);
@@ -221,7 +222,7 @@
 
 	AudioObject.inputs = inputs;
 	AudioObject.outputs = outputs;
-	AudioObject.ramp = ramp;
+	AudioObject.ramp = rampToValue;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
