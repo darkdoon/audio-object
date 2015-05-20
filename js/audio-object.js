@@ -111,7 +111,7 @@
 			set: function(val) {
 				// Create a new notify message and update the value.
 				update(val);
-				automate(val, duration, curve);
+				automate(val);
 			},
 
 			enumerable: isDefined(data.enumerable) ? data.enumerable : true,
