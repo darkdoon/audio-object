@@ -45,7 +45,7 @@ audio param behind the scenes. Automating a property via <code>.automate()</code
 updates the audio param and notifies any property observers of changes at the
 browser frame rate for the duration of the automation.
 
-An audioObject has other methods besides <code>.automate()</code>.
+An audioObject also has a few methods&hellips;
 
 ### audioObject methods
 
