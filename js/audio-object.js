@@ -39,6 +39,10 @@
 		param.exponentialRampToValueAtTime(n, time + duration);
 	}
 
+	function ramp(param, value, time, duration, curve) {
+		ramps[curve](param, value, time, duration);
+	}
+
 	function defineAudioProperty(object, name, audio, data) {
 		var param = isAudioParam(data) ? data : data.param ;
 
@@ -48,14 +52,14 @@
 		var defaultDuration = data.duration || 0.008;
 
 		var set = param ?
-		    	function set(value, duration, curve) {
-		    		ramps[curve](param, value, audio.currentTime, duration);
+		    	function set(value, time, duration, curve) {
+		    		ramps[curve](param, value, time, duration);
 		    	} :
-		    	data.set ;
+		    	data.set.bind(object) ;
 
 		var get = param ?
 		    	function get() { return param.value; } :
-		    	data.get ;
+		    	data.get.bind(object) ;
 
 		var value = get();
 
@@ -65,7 +69,7 @@
 		    };
 
 		function automate(value, duration, curve) {
-			set(value, duration || defaultDuration, curve || defaultCurve);
+			set(value, audio.currentTime, duration || defaultDuration, curve || defaultCurve);
 			window.requestAnimationFrame(frame);
 		}
 
@@ -132,37 +136,6 @@
 
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
-	var prototype = {
-		automate: function(name, value, time, curve) {
-			var automators = automation.get(this);
-			if (!automators) { return; }
-
-			var fn = automators[name];
-			if (!fn) { return; }
-
-			fn(value, time, curve);
-		},
-
-		connect: function connect(destination) {
-			// Support both AudioObjects and native AudioNodes.
-			var input = isAudioObject(destination) ?
-			    	inputs.get(destination).input :
-			    	destination ;
-
-			if (!input) { return; }
-
-			var output = outputs.get(this);
-
-			output.connect(input);
-		},
-
-		disconnect: function disconnect() {
-			var output = outputs.get(this);
-			output.disconnect();
-		},
-
-		destroy: noop
-	};
 
 	function isAudioObject(object) {
 		return prototype.isPrototypeOf(object);
@@ -201,9 +174,41 @@
 		}
 	}
 
+	extend(AudioObject.prototype, {
+		automate: function(name, value, time, curve) {
+			var automators = automation.get(this);
+			if (!automators) { return; }
+
+			var fn = automators[name];
+			if (!fn) { return; }
+
+			fn(value, time, curve);
+		},
+
+		connect: function connect(destination) {
+			// Support both AudioObjects and native AudioNodes.
+			var input = isAudioObject(destination) ?
+			    	inputs.get(destination).input :
+			    	destination ;
+
+			if (!input) { return; }
+
+			var output = outputs.get(this);
+
+			output.connect(input);
+		},
+
+		disconnect: function disconnect() {
+			var output = outputs.get(this);
+			output.disconnect();
+		},
+
+		destroy: noop
+	});
+
 	AudioObject.inputs = inputs;
 	AudioObject.outputs = outputs;
-	AudioObject.prototype = prototype;
+	AudioObject.ramp = ramp;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;

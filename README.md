@@ -20,7 +20,7 @@ Here is a simple example of a compressor and a gain wrapped into a single
 audio object:
 
     function createCompressGain() {
-        var compressor = audio.createCompressor();
+        var compressor = audio.createDynamicsCompressor();
         var gain = audio.createGain();
 
         compressor.connect(gain);
@@ -98,8 +98,10 @@ It's used by the <code>AudioObject()</code> constructor to set up an audio
 object.
 
 Echoes the JS function <code>Object.defineProperties()</code>, but an audio
-property is defined as a getter/setter that is bound to the value of an audio
-param. As with <code>.defineProperties()</code>, <code>enumerable</code> and
+property is a getter/setter that is bound to the value of an audio
+param.
+
+As with <code>.defineProperties()</code>, <code>enumerable</code> and
 <code>configurable</code> can be set. They are set to <code>true</code> by
 default. <code>curve</code> can also be set, which, if <code>object</code> is an
 audioObject, is the curve to be used by <code>.automate()</code> by default.
@@ -109,12 +111,29 @@ audioObject, is the curve to be used by <code>.automate()</code> by default.
     AudioObject.defineAudioProperties(object, audioContext, {
         // Pass in an Audio Param directly
         ratio: compressor.ratio,
-        
+
         // Or pass in an object to define the audio property
+        // as an audio param
         level: {
             param: gain.gain,
             curve: 'exponential',
             enumerable: false
+        },
+
+        // Or to control more than one audio param with a single
+        // property, pass in a get/set pair. The setter is called
+        // when setting the property directly or via .automate().
+        response: {
+            get: function() {
+                return compressor.attack.value;
+            },
+
+            set: function(value, time, duration, curve) {
+                AudioObject.ramp(curve, compressor.attack, value, time, duration);
+                AudioObject.ramp(curve, compressor.release, value * 6, time, duration);
+            },
+
+            curve: 'linear'
         }
     });
 
