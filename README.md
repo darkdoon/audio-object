@@ -25,18 +25,14 @@ audio object:
 
         compressor.connect(gain);
 
-        return AudioObject(audioContext, compressor, gain, {
+        return AudioObject(audio, compressor, gain, {
             threshold: compressor.threshold,
             ratio: compressor.ratio,
             level: gain.gain
         });
     }
 
-    var effect = createCompressGain();
-
-
-An audioObject does not expose Audio Params. <code>effect</code> is a 'flat'
-object with properties:
+The result of <code>createCompressGain()</code> is a 'flat' object with properties:
 
     {
         threshold: -20,
@@ -44,7 +40,10 @@ object with properties:
         level: 1
     }
 
-Easy to JSON-ify. Easy to observe. It also has a few methods.
+Easy to JSONify. Easy to observe. Setting one of these properties updates the
+corresponding audio param value behind the scenes.
+
+An audioObject also has a few methods.
 
 ### audioObject methods
 
