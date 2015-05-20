@@ -40,10 +40,12 @@ The result of <code>createCompressGain()</code> is a 'flat' object:
         level: 1
     }
 
-Easy to JSONify. Easy to observe. Setting one of these properties updates the
-corresponding audio param value behind the scenes.
+Easy to JSONify. Easy to observe. Setting a property updates the corresponding
+audio param behind the scenes. Automating a property via <code>.automate()</code>
+updates the audio param and notifies any property observers of changes at the
+browser frame rate for the duration of the automation.
 
-An audioObject also has a few methods.
+An audioObject has other methods besides <code>.automate()</code>.
 
 ### audioObject methods
 
