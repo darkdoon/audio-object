@@ -32,7 +32,7 @@ audio object:
         });
     }
 
-The result of <code>createCompressGain()</code> is a 'flat' object with properties:
+The result of <code>createCompressGain()</code> is a 'flat' object:
 
     {
         threshold: -20,
