@@ -136,6 +136,37 @@
 
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
+	var prototype = {
+		automate: function(name, value, time, curve) {
+			var automators = automation.get(this);
+			if (!automators) { return; }
+
+			var fn = automators[name];
+			if (!fn) { return; }
+
+			fn(value, time, curve);
+		},
+
+		connect: function connect(destination) {
+			// Support both AudioObjects and native AudioNodes.
+			var input = isAudioObject(destination) ?
+			    	inputs.get(destination).input :
+			    	destination ;
+
+			if (!input) { return; }
+
+			var output = outputs.get(this);
+
+			output.connect(input);
+		},
+
+		disconnect: function disconnect() {
+			var output = outputs.get(this);
+			output.disconnect();
+		},
+
+		destroy: noop
+	};
 
 	function isAudioObject(object) {
 		return prototype.isPrototypeOf(object);
@@ -174,36 +205,8 @@
 		}
 	}
 
-	extend(AudioObject.prototype, {
-		automate: function(name, value, time, curve) {
-			var automators = automation.get(this);
-			if (!automators) { return; }
-
-			var fn = automators[name];
-			if (!fn) { return; }
-
-			fn(value, time, curve);
-		},
-
-		connect: function connect(destination) {
-			// Support both AudioObjects and native AudioNodes.
-			var input = isAudioObject(destination) ?
-			    	inputs.get(destination).input :
-			    	destination ;
-
-			if (!input) { return; }
-
-			var output = outputs.get(this);
-
-			output.connect(input);
-		},
-
-		disconnect: function disconnect() {
-			var output = outputs.get(this);
-			output.disconnect();
-		},
-
-		destroy: noop
+	Object.keys(prototype).forEach(function(key) {
+		AudioObject.prototype[key] = prototype[key];
 	});
 
 	AudioObject.inputs = inputs;
