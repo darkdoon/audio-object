@@ -139,10 +139,20 @@
 	var prototype = {
 		automate: function(name, value, time, curve) {
 			var automators = automation.get(this);
-			if (!automators) { return; }
+			if (!automators) {
+				// Only proerties that have been registered
+				// by defineAudioProperty() can be automated.
+				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				return;
+			}
 
 			var fn = automators[name];
-			if (!fn) { return; }
+			if (!fn) {
+				// Only proerties that have been registered
+				// by defineAudioProperty() can be automated.
+				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				return;
+			}
 
 			fn(value, time, curve);
 		},
