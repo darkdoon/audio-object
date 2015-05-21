@@ -88,9 +88,27 @@ your audio graph.
 
 ### AudioObject Functions
 
+#### AudioObject.automate(param, value, time, duration, curve)
+
+Automates a value change on an AudioParam.
+
+<code>param</code> is the AudioParam.
+<code>value</code> is the value to automate to.
+<code>time</code> is the time to start the automation. Use <code>param.context.currentTime</code>
+to start the automation now.
+<code>duration</code> is the duration of the automation. If duration is <code>0</code> or not
+defined, <code>curve</code> is set to <code>'step'</code>. 
+<code>curve</code> is the name of the automation curve. Choices are:
+
+- 'step' uses param.setValueAtTime() to set <code>value</code> immediately
+- 'linear' uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- 'exponential' uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+
+
 #### AudioObject.isAudioObject(object)
 
-Returns <code>true</code> if <code>object</code> is an instance of <code>AudioObject</code>.
+Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
+in it's prototype chain.
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
@@ -131,8 +149,8 @@ audioObject, is the curve to be used by <code>.automate()</code> by default.
             },
 
             set: function(value, time, duration, curve) {
-                AudioObject.rampToValue(compressor.attack, value, time, duration, curve);
-                AudioObject.rampToValue(compressor.release, value * 6, time, duration, curve);
+                AudioObject.automate(compressor.attack, value, time, duration, curve);
+                AudioObject.automate(compressor.release, value * 6, time, duration, curve);
             },
 
             curve: 'linear'
@@ -148,13 +166,13 @@ name <code>name</code>.
 
 Returns <code>object</code>.
 
-### Properties
-
-#### AudioObject.inputs<br/>AudioObject.outputs
-
-WeakMaps where inputNode and outputNode for audio objects are stored. Normally
-you will not need to touch these, but they can be useful for debugging. They are
-used internally by audioObject <code>.connect()</code> and
-<code>.disconnect()</code>.
-
-    var inputNode = AudioObject.inputs.get(audioObject);
+//### Properties
+//
+//#### AudioObject.inputs<br/>AudioObject.outputs
+//
+//WeakMaps where inputNode and outputNode for audio objects are stored. Normally
+//you will not need to touch these, but they can be useful for debugging. They are
+//used internally by audioObject <code>.connect()</code> and
+//<code>.disconnect()</code>.
+//
+//    var inputNode = AudioObject.inputs.get(audioObject);

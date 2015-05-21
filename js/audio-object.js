@@ -5,7 +5,7 @@
 	// defineAudioProperty()
 	// defineAudioProperties()
 
-	var automation = new WeakMap();
+	var automatorMap = new WeakMap();
 
 	var defaults = {
 	    	duration: 0.008
@@ -23,12 +23,16 @@
 		return val !== undefined && val !== null;
 	}
 
+	function isAudioNode(object) {
+		return window.AudioNode.prototype.isPrototypeOf(object);
+	}
+
 	function isAudioParam(object) {
 		return window.AudioParam && window.AudioParam.prototype.isPrototypeOf(object);
 	}
 
 	function registerAutomator(object, name, fn) {
-		var automators = automation.get(object) || (automation.set(object, {}));
+		var automators = automatorMap.get(object) || (automatorMap.set(object, {}));
 		automators[name] = fn;
 	}
 
@@ -142,51 +146,117 @@
 	}
 
 
+
 	// AudioObject()
 
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
-	var prototype = {
-		automate: function(name, value, time, curve) {
-			var automators = automation.get(this);
-			if (!automators) {
-				// Only proerties that have been registered
-				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
-				return;
+	var connectionMap = new WeakMap();
+
+	function createConnections(object) {
+		var output = outputs.get(object);
+		var n = output.numberOfOutputs;
+		var connections = [];
+		while (n--) { connections.push(new Map()); }
+		return connections;
+	}
+
+	function getConnections(source) {
+		var connections = connectionMap.get(source);
+
+		if (!connections) {
+			console.log('source', source);
+			connections = createConnections(source);
+			connectionMap.set(source, connections);
+		}
+
+		return connections;
+	}
+
+	function setChannelConnection(connections, destination, channel) {
+		var array = connections.get(destination);
+
+		if (!array) {
+ 			array = [];
+ 			connections.set(destination, array);
+		}
+
+		if (array.indexOf(channel) === -1) {
+			array.push(channel);
+		}
+	}
+
+	function clearChannelConnection(connections, destination, channel) {
+		if (!destination) {
+			connections.clear();
+			return;
+		}
+
+		if (!isDefined(channel)) {
+			connections.delete(destination);
+		}
+
+		var array = connections.get(destination);
+		var i = array.indexOf(channel);
+
+		if (i === -1) { return; }
+
+		array.splice(i, 1);
+	}
+
+	function setConnection(source, destination, channelOut, channelIn) {
+		var connections = getConnections(source);
+
+		if (isDefined(channelOut)) {
+			console.log(connections[channelOut], connections);
+			setChannelConnection(connections[channelOut], destination, channelIn);
+			return;
+		}
+
+		var chan = connections.length;
+
+		while (chan--) {
+			setChannelConnection(connections[chan], destination, chan);
+		}
+	}
+
+	function removeConnection(source, destination, channelOut, channelIn) {
+		var connections = getConnections(source);
+
+		if (isDefined(channelOut)) {
+			clearChannelConnection(connections[channelOut], destination, channelOut);
+			return;
+		}
+
+		var chan = connections.length;
+
+		while (chan--) {
+			clearChannelConnection(connections[chan], destination, chan);
+		}
+	}
+
+	function disconnectDestination(source, output, input, channelOut, channelIn) {
+		var connections = getConnections(source);
+		var n = connections.length;
+		var map, destination, array, i;
+
+		output.disconnect();
+
+		// Reconnect destinations apart from input
+		while (n--) {
+			for (map of connections[n]) {
+				destination = map[0];
+				array = map[1];
+
+				if (destination === input) { continue; }
+
+				i = array.length;
+				while (i--) {
+					output.connect(destination, n, array[i]);
+				}
 			}
-
-			var fn = automators[name];
-			if (!fn) {
-				// Only proerties that have been registered
-				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
-				return;
-			}
-
-			fn(value, time, curve);
-		},
-
-		connect: function connect(destination) {
-			// Support both AudioObjects and native AudioNodes.
-			var input = isAudioObject(destination) ?
-			    	inputs.get(destination).input :
-			    	destination ;
-
-			if (!input) { return; }
-
-			var output = outputs.get(this);
-
-			output.connect(input);
-		},
-
-		disconnect: function disconnect() {
-			var output = outputs.get(this);
-			output.disconnect();
-		},
-
-		destroy: noop
-	};
+		}
+	}
 
 	function isAudioObject(object) {
 		return prototype.isPrototypeOf(object);
@@ -225,13 +295,89 @@
 		}
 	}
 
+	var prototype = {
+		automate: function(name, value, time, curve) {
+			var automators = automatorMap.get(this);
+			if (!automators) {
+				// Only proerties that have been registered
+				// by defineAudioProperty() can be automated.
+				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				return;
+			}
+
+			var fn = automators[name];
+			if (!fn) {
+				// Only proerties that have been registered
+				// by defineAudioProperty() can be automated.
+				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				return;
+			}
+
+			fn(value, time, curve);
+		},
+
+		connect: function connect(destination, channelOut, channelIn) {
+			// Support both AudioObjects and native AudioNodes.
+			var input = isAudioNode(destination) ?
+			    	destination :
+			    	inputs.get(destination) ;
+
+			if (!input) { return; }
+
+			var output = outputs.get(this);
+
+			if (isDefined(channelOut) && isDefined(channelIn)) {
+				if (channelIn >= input.numberOfInputs) {
+					console.warn('AudioObject: Trying to .connect() to a non-existent channel (' +
+						channelIn + ') on input node {numberOfInputs: ' + input.numberOfInputs + '}. Dropping connection.');
+					return;
+				}
+
+				if (channelOut >= output.numberOfOutputs) {
+					console.warn('AudioObject: Trying to .connect() from a non-existent channel (' +
+						channelOut + ') on output node {numberOfOutputs: ' + output.numberOfOutputs + '}. Dropping connection.');
+					return;
+				}
+
+				output.connect(input, channelOut, channelIn);
+				setConnection(this, input, channelOut, channelIn);
+			}
+			else {
+				output.connect(input);
+				setConnection(this, input);
+			}
+		},
+
+		disconnect: function disconnect(destination, channelOut, channelIn) {
+			var output = outputs.get(this);
+
+			if (!destination) {
+				output.disconnect();
+				removeConnection(this);
+				return;
+			}
+
+			var input = isAudioNode(destination) ?
+			    	destination :
+			    	inputs.get(destination) ;
+
+			if (!input) { return; }
+
+			disconnectDestination(this, output, input, channelOut, channelIn);
+			removeConnection(this, input, channelOut, channelIn);
+		},
+
+		destroy: noop
+	};
+
 	Object.keys(prototype).forEach(function(key) {
 		AudioObject.prototype[key] = prototype[key];
 	});
 
 	AudioObject.inputs = inputs;
 	AudioObject.outputs = outputs;
-	AudioObject.rampToValue = rampToValue;
+	AudioObject.connections = connectionMap;
+	AudioObject.automate = rampToValue;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
