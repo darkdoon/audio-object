@@ -1,0 +1,126 @@
+<link rel="stylesheet" href="../bolt/css/bolt.normalise.css" />
+<link rel="stylesheet" href="../bolt/css/bolt.classes.css" />
+<link rel="stylesheet" href="../bolt/css/bolt.grid.css" />
+<link rel="stylesheet" href="../bolt/css/bolt.typography.css" />
+<link rel="stylesheet" href="../bolt/css/bolt.typography.12_20.css" />
+
+<style>
+	.grid-index > li,
+	.grid-index > li:first-child {
+		margin-top: 2rem;
+	}
+
+	table {
+		font-size: 12px;
+	}
+
+	body > h1 {
+		margin-top: 0.625rem;
+		margin-left: 0.625rem;
+	}
+
+	h1,
+	h2 { font-weight: 700; }
+
+	hr {
+		border-color: #cccccc;
+		margin-top: 0.5rem;
+	}
+
+	.type-string { color: green; }
+	.type-string::before { content: '\''; }
+	.type-string::after  { content: '\''; }
+
+	.type-number { color: purple; }
+
+	.type-object { font-style: italic; }
+</style>
+
+<h1 class="grid-1/1">Default properties</h1>
+
+<ul class="grid-index-1/5 grid-index index">
+	<li data-scope="nodes">
+		<h2>{{{nameOfConstructor}}}</h2>
+		<pre class="block">numberOfInputs: <code class="type-{{{numberOfInputs|type}}}">{{{numberOfInputs}}}</code></pre>
+		<pre class="block">numberOfOutputs: <code class="type-{{{numberOfOutputs|type}}}">{{{numberOfOutputs}}}</code></pre>
+		<pre class="block">channelInterpretation: <code class="type-{{{channelInterpretation|type}}}">{{{channelInterpretation}}}</code></pre>
+		<pre class="block">channelCountMode: <code class="type-{{{channelCountMode|type}}}">{{{channelCountMode}}}</code></pre>
+		<pre class="block">channelCount: <code class="type-{{{channelCount|type}}}">{{{channelCount}}}</code></pre>
+		<hr/>
+		<div data-ctrl="other-properties">
+			<pre data-scope="{{properties}}" class="block">{{{name}}}: <code class="type-{{{value|type}}}">{{{value}}}</code></pre>
+		</div>
+	</li>
+</li>
+	
+
+<script src="../sparky/src/jquery-2.1.1.js"></script>
+<script src="../sparky/js/sparky.js"></script>
+<script src="../soundio/js/navigator.getusermedia.js"></script>
+
+<script>
+var audio = new window.AudioContext();
+var names = ('Analyser BiquadFilter ChannelMerger ChannelSplitter Convolver Delay DynamicsCompressor Gain Oscillator Panner ScriptProcessor StereoPanner WaveShaper').split(' ');
+var nodes = names.map(toAudioNode);
+var props = ('numberOfInputs numberOfOutputs channelInterpretation channelCountMode channelCount context nameOfConstructor').split(' ');
+var mediaRequest = new Promise(function(fulfill, reject) {
+		if (navigator.getUserMedia) {
+			navigator.getUserMedia({ audio: { optional: [{ echoCancellation: false }] } }, function(stream) {
+				var input = audio.createMediaStreamSource(stream);
+
+				if (window.console) {
+					console.log('Soundio: Input enabled. Channels:', input.channelCount);
+				}
+
+				fulfill(input);
+				return input;
+			}, reject);
+		}
+		else {
+			reject({ message: 'navigator.getUserMedia: ' + !!navigator.getUserMedia });
+		}
+	});
+
+function isAudioParam(object) {
+	return window.AudioParam && window.AudioParam.prototype.isPrototypeOf(object);
+}
+
+function toAudioNode(string) {
+	var node = audio['create' + string]();
+	node.nameOfConstructor = string;
+	return node;
+}
+
+mediaRequest.then(function(mediaStream) {
+	mediaStream.nameOfConstructor = 'MediaStreamSource(stream)';
+	Sparky.data.nodes.push(mediaStream);
+});
+
+audio.destination.nameOfConstructor = 'context.destination';
+nodes.push(audio.destination);
+
+
+
+Sparky.data.nodes = Collection(nodes);
+
+Sparky.ctrl['other-properties'] = function(domNode, audioNode) {
+	var scope = {};
+	var properties = Object.keys(audioNode);
+	var p = props.length;
+	var i;
+
+	while(p--) {
+		i = properties.indexOf(props[p]);
+		if (i > -1) { properties.splice(i, 1); }
+	}
+
+	scope.properties = Collection(properties.map(function(prop) {
+		return {
+			name: prop,
+			value: isAudioParam(audioNode[prop]) ? 'param' : audioNode[prop]
+		};
+	}));
+console.log(scope.properties);
+	return scope;
+};
+</script>
