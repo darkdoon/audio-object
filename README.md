@@ -12,7 +12,7 @@ at some point).
 
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
-Here is a simple example of a compressor and a gain wrapped into a single
+Here is an example of a compressor and a gain wrapped into a single
 audio object:
 
     function createCompressGain() {
@@ -117,11 +117,6 @@ Echoes the JS function <code>Object.defineProperties()</code>, but an audio
 property is a getter/setter that is bound to the value of an audio
 param.
 
-As with <code>.defineProperties()</code>, <code>enumerable</code> and
-<code>configurable</code> can be set. They are set to <code>true</code> by
-default. <code>curve</code> can also be set, which, if <code>object</code> is an
-audioObject, is the curve to be used by <code>.automate()</code> by default.
-
     var object = {};
 
     AudioObject.defineAudioProperties(object, audioContext, {
@@ -134,11 +129,18 @@ audioObject, is the curve to be used by <code>.automate()</code> by default.
             param: gain.gain,
             curve: 'exponential',
             enumerable: false
-        },
+        }
+    });
 
-        // Or to control more than one audio param with a single
-        // property, pass in a get/set pair. The setter is called
-        // when setting the property directly or via .automate().
+As with <code>.defineProperties()</code>, <code>enumerable</code> and
+<code>configurable</code> can be set, althuogh they are set to <code>true</code>
+by default. <code>curve</code> can also be set, which, if <code>object</code> is
+an AudioObject, sets the curve to be used by <code>.automate()</code> by default.
+
+To control more than one audio param with a single property, define a
+getter/setter pair:
+
+    AudioObject.defineAudioProperties(object, audioContext, {
         response: {
             get: function() {
                 return compressor.attack.value;
