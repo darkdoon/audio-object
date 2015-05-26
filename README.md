@@ -6,9 +6,8 @@ in an app.
 
 During an automation a property of an AudioObject is updated from it's
 audio param value at the browser frame rate. Changes are
-<code>Object.observe</code>-able, or observable using that technique
-where you redefine the getter/setter (remembering to call the original
-at some point).
+<code>Object.observe</code>-able (or observable using that technique
+where the getter/setter is redefined).
 
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
