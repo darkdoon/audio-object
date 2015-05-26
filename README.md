@@ -133,16 +133,15 @@ param.
     var object = {};
 
     AudioObject.defineAudioProperties(object, audioContext, {
-        // Pass in an Audio Param directly
-        ratio: compressor.ratio,
-
-        // Or pass in an object to define the audio property
-        // as an audio param
+        // Define the property with an object...
         level: {
             param: gain.gain,
             curve: 'exponential',
             enumerable: false
-        }
+        },
+
+        // ...or as a shortcut, pass in the param directly.
+        ratio: compressor.ratio
     });
 
 As with <code>.defineProperties()</code>, <code>enumerable</code> and
