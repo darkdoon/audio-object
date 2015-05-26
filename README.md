@@ -42,9 +42,40 @@ audio param behind the scenes. Automating a property via <code>.automate()</code
 updates the audio param and notifies any property observers of changes at the
 browser frame rate for the duration of the automation.
 
-An audioObject also has a few methods...
+To read more about what you can pass in to <code>AudioObject()</code> as params,
+see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
 
-### audioObject methods
+### methods
+
+
+
+    var audioObject = createCompressGain();
+
+
+#### .connect(audioNode | audioObject)
+
+Like <code>node1.connect(node2)</code>:
+
+    var delayNode = audioContext.createDelay();
+    audioObject.connect(delayNode);
+
+But <code>audioObject.connect()</code> will also accept another audioObject to
+connect to. audioObject's outputNode is connected directly to <code>audioNode</code>
+or to <code>audioObject</code>'s input node.
+
+    var delayNode = audio.createDelay();
+    var delayObject = new AudioObject(audio, delayNode, delayNode, {
+        time: delayNode.delayTime
+    });
+    
+    audioObject.connect(delayObject);
+
+#### .disconnect()
+
+Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
+outputNode.
+
+    effect.disconnect(delay);
 
 #### .automate(name, value, duration, [curve])
 
@@ -58,24 +89,6 @@ non-zero values.
 
 Properties of the audioObject are updated at the browser's frame rate during an
 automation.
-
-#### .connect(audioNode | audioObject)
-
-Like <code>node1.connect(node2)</code>, but an audioObject will accept either
-a Web Audio node or another audioObject to connect to. The outputNode (that was
-passed into <code>AudioObject()</code> when this audioObject was created) is
-connected directly to <code>audioNode</code> or to <code>audioObject</code>'s input
-node.
-
-    var delay = audioContext.createDelay();
-    effect.connect(delay);
-
-#### .disconnect()
-
-Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
-outputNode.
-
-    effect.disconnect(delay);
 
 #### .destroy()
 
