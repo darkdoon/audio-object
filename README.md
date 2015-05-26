@@ -179,7 +179,7 @@ name <code>name</code>.
 
 Returns <code>object</code>.
 
-/*
+<!--
 ## The problem
 
 In Web Audio, changes to AudioParam values are difficult to observe.
@@ -203,3 +203,4 @@ of the changes at the browser's frame rate. That's good for creating UIs.
 //
 //    var inputNode = AudioObject.inputs.get(audioObject);
 */
+-->
