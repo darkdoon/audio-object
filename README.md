@@ -1,18 +1,6 @@
-# audio-object
+# AudioObject
 A wrapper for graphs of AudioNodes that exposes their AudioParams as
 getter/setters on an object.
-
-## The problem
-
-In Web Audio, changes to AudioParam values are difficult to observe.
-Neither <code>Object.observe</code> nor redefining them as getters/setters will
-work (for good performance reasons, as observers could potentially be called
-at the sample rate).
-
-An audioObject provides an observable interface to graphs of AudioNodes and
-AudioParams. Changes to the properties of an audioObject are reflected
-immediately in the audio graph, but observers of those properties are notified
-of the changes at the browser's frame rate. That's good for creating UIs.
 
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
@@ -166,6 +154,19 @@ name <code>name</code>.
 
 Returns <code>object</code>.
 
+/*
+## The problem
+
+In Web Audio, changes to AudioParam values are difficult to observe.
+Neither <code>Object.observe</code> nor redefining them as getters/setters will
+work (for good performance reasons, as observers could potentially be called
+at the sample rate).
+
+An audioObject provides an observable interface to graphs of AudioNodes and
+AudioParams. Changes to the properties of an audioObject are reflected
+immediately in the audio graph, but observers of those properties are notified
+of the changes at the browser's frame rate. That's good for creating UIs.
+
 //### Properties
 //
 //#### AudioObject.inputs<br/>AudioObject.outputs
@@ -176,3 +177,4 @@ Returns <code>object</code>.
 //<code>.disconnect()</code>.
 //
 //    var inputNode = AudioObject.inputs.get(audioObject);
+*/
