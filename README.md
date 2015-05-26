@@ -133,12 +133,15 @@ param.
     });
 
 As with <code>.defineProperties()</code>, <code>enumerable</code> and
-<code>configurable</code> can be set, althuogh they are set to <code>true</code>
+<code>configurable</code> can be set, although they are <code>true</code>
 by default. <code>curve</code> can also be set, which, if <code>object</code> is
-an AudioObject, sets the curve to be used by <code>.automate()</code> by default.
+an AudioObject, sets the default curve to be used by <code>.automate()</code>.
 
 To control more than one audio param with a single property, define a
-getter/setter pair:
+getter/setter pair. Note that both are required. It is the setter's
+responsibility to automate the audio param values with the given time,
+duration and curve. <code>AudioObject.automate()</code> Can help with
+that.
 
     AudioObject.defineAudioProperties(object, audioContext, {
         response: {
