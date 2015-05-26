@@ -47,10 +47,11 @@ see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">A
 
 ### methods
 
+An instance of AudioObject has the methods <code>.connect()</code>,
+<code>.disconnect()</code>, <code>.automate()</code> and
+<code>.destroy()</code>.
 
-
-    var audioObject = createCompressGain();
-
+    var audioObject = AudioObject(audio, input, output, params);
 
 #### .connect(audioNode | audioObject)
 
