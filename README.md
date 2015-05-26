@@ -76,7 +76,7 @@ or to <code>audioObject</code>'s input node.
 Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
 outputNode.
 
-    effect.disconnect(delay);
+    audioObject.disconnect(delay);
 
 #### .automate(name, value, duration, [curve])
 
@@ -86,15 +86,17 @@ parameter <code>curve</code> can be either <code>'linear'</code> (the default) o
 <code>'exponential'</code>. Exponential curves can only be used on positive
 non-zero values.
 
-    effect.automate('level', 0, 1.2)
+    audioObject.automate('level', 0, 1.2)
 
 Properties of the audioObject are updated at the browser's frame rate during an
 automation.
 
 #### .destroy()
 
-Destroy is a noop by default. Override it so that when it is called it destroys
-your audio graph.
+Destroy is a noop by default. It should be overidden so that it destroys the nodes
+in the audioObject's audio graph.
+
+    audioObject.destroy()
 
 ### AudioObject Functions
 
