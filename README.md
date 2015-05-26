@@ -1,6 +1,11 @@
 # AudioObject
 A wrapper for graphs of AudioNodes that exposes their AudioParams as
-getter/setters on an object.
+getter/setters on an object. An AudioObject can be used as an observable,
+JSONifiable data store – a model of a an audio graph – in an app.
+
+During an automation a property of an AudioObject is updated from it's
+audio param value at the browser frame rate, which is useful for
+making UIs.
 
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
