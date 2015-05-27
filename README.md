@@ -1,22 +1,18 @@
-# audio-object
-A wrapper for graphs of AudioNodes that exposes their AudioParams as
-getter/setters on an object.
+# AudioObject
+A wrapper for a graph of AudioNodes that exposes AudioParam values as
+getter/setters on an plain ol' object. An AudioObject can serve as an
+observable, JSONifiable model of an audio sub-graph – an audio 'plugin'
+– in an app.
 
-## The problem
+During an automation a property of an AudioObject is updated from it's
+audio param value at the browser frame rate. Changes are
+<code>Object.observe</code>-able (or observable using that technique
+where the getter/setter is redefined).
 
-In Web Audio, changes to AudioParam values are difficult to observe.
-Neither <code>Object.observe</code> nor redefining them as getters/setters will
-work (for good performance reasons, as observers could potentially be called
-at the sample rate).
-
-An audioObject provides an observable interface to graphs of AudioNodes and
-AudioParams. Changes to the properties of an audioObject are reflected
-immediately in the audio graph, but observers of those properties are notified
-of the changes at the browser's frame rate. That's good for creating UIs.
 
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
-Here is a simple example of a compressor and a gain wrapped into a single
+Here is an example of a compressor and a gain wrapped into a single
 audio object:
 
     function createCompressGain() {
@@ -46,9 +42,42 @@ audio param behind the scenes. Automating a property via <code>.automate()</code
 updates the audio param and notifies any property observers of changes at the
 browser frame rate for the duration of the automation.
 
-An audioObject also has a few methods...
+To read more about what you can pass in to <code>AudioObject()</code> as params,
+see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
 
-### audioObject methods
+
+### methods
+
+An instance of AudioObject has the methods <code>.connect()</code>,
+<code>.disconnect()</code>, <code>.automate()</code> and
+<code>.destroy()</code>.
+
+    var audioObject = AudioObject(audio, input, output, params);
+
+#### .connect(audioNode | audioObject)
+
+Like <code>node1.connect(node2)</code>:
+
+    var delayNode = audioContext.createDelay();
+    audioObject.connect(delayNode);
+
+But <code>audioObject.connect()</code> will also accept another audioObject to
+connect to. audioObject's outputNode is connected directly to <code>audioNode</code>
+or to <code>audioObject</code>'s input node.
+
+    var delayNode = audio.createDelay();
+    var delayObject = new AudioObject(audio, delayNode, delayNode, {
+        time: delayNode.delayTime
+    });
+    
+    audioObject.connect(delayObject);
+
+#### .disconnect()
+
+Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
+outputNode.
+
+    audioObject.disconnect(delay);
 
 #### .automate(name, value, duration, [curve])
 
@@ -58,35 +87,20 @@ parameter <code>curve</code> can be either <code>'linear'</code> (the default) o
 <code>'exponential'</code>. Exponential curves can only be used on positive
 non-zero values.
 
-    effect.automate('level', 0, 1.2)
+    audioObject.automate('level', 0, 1.2)
 
 Properties of the audioObject are updated at the browser's frame rate during an
 automation.
 
-#### .connect(audioNode | audioObject)
-
-Like <code>node1.connect(node2)</code>, but an audioObject will accept either
-a Web Audio node or another audioObject to connect to. The outputNode (that was
-passed into <code>AudioObject()</code> when this audioObject was created) is
-connected directly to <code>audioNode</code> or to <code>audioObject</code>'s input
-node.
-
-    var delay = audioContext.createDelay();
-    effect.connect(delay);
-
-#### .disconnect()
-
-Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
-outputNode.
-
-    effect.disconnect(delay);
-
 #### .destroy()
 
-Destroy is a noop by default. Override it so that when it is called it destroys
-your audio graph.
+Destroy is a noop by default. It should be overidden so that it destroys the nodes
+in the audioObject's audio graph.
 
-### AudioObject Functions
+    audioObject.destroy()
+
+
+### AudioObject functions
 
 #### AudioObject.automate(param, value, time, duration, curve)
 
@@ -104,11 +118,7 @@ defined, <code>curve</code> is set to <code>'step'</code>.
 - 'linear' uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 - 'exponential' uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 
-
-#### AudioObject.isAudioObject(object)
-
-Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
-in it's prototype chain.
+returns <code>undefined</code>;
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
@@ -121,28 +131,32 @@ Echoes the JS function <code>Object.defineProperties()</code>, but an audio
 property is a getter/setter that is bound to the value of an audio
 param.
 
-As with <code>.defineProperties()</code>, <code>enumerable</code> and
-<code>configurable</code> can be set. They are set to <code>true</code> by
-default. <code>curve</code> can also be set, which, if <code>object</code> is an
-audioObject, is the curve to be used by <code>.automate()</code> by default.
-
     var object = {};
 
     AudioObject.defineAudioProperties(object, audioContext, {
-        // Pass in an Audio Param directly
-        ratio: compressor.ratio,
-
-        // Or pass in an object to define the audio property
-        // as an audio param
+        // Define the property with an object...
         level: {
             param: gain.gain,
             curve: 'exponential',
             enumerable: false
         },
 
-        // Or to control more than one audio param with a single
-        // property, pass in a get/set pair. The setter is called
-        // when setting the property directly or via .automate().
+        // ...or as a shortcut, pass in the param directly.
+        ratio: compressor.ratio
+    });
+
+As with <code>.defineProperties()</code>, <code>enumerable</code> and
+<code>configurable</code> can be set, although they are <code>true</code>
+by default. <code>curve</code> can also be set, which, if <code>object</code> is
+an AudioObject, sets the default curve to be used by <code>.automate()</code>.
+
+To control more than one audio param with a single property, define a
+getter/setter pair. Note that both are required. It is the setter's
+responsibility to automate the audio param values with the given time,
+duration and curve. <code>AudioObject.automate()</code> Can help with
+that.
+
+    AudioObject.defineAudioProperties(object, audioContext, {
         response: {
             get: function() {
                 return compressor.attack.value;
@@ -166,6 +180,42 @@ name <code>name</code>.
 
 Returns <code>object</code>.
 
+#### AudioObject.isAudioObject(object)
+
+Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
+in it's prototype chain.
+
+
+### AudioObject properties
+
+#### AudioObject.features
+
+A key-value store of results from feature tests in the browser. Currently there is
+one feature test, <code>disconnectParameters</code>:
+
+    // Does the audioNode.disconnect() method accept parameters?
+    if (AudioObject.features.disconnectParameters) {
+        node1.disconnect(node2, output, input)
+    }
+    else {
+        node1.disconnect();
+        // Reconnect nodes that should not have been disconnected...
+    }
+
+
+<!--
+## The problem
+
+In Web Audio, changes to AudioParam values are difficult to observe.
+Neither <code>Object.observe</code> nor redefining them as getters/setters will
+work (for good performance reasons, as observers could potentially be called
+at the sample rate).
+
+An audioObject provides an observable interface to graphs of AudioNodes and
+AudioParams. Changes to the properties of an audioObject are reflected
+immediately in the audio graph, but observers of those properties are notified
+of the changes at the browser's frame rate. That's good for creating UIs.
+
 //### Properties
 //
 //#### AudioObject.inputs<br/>AudioObject.outputs
@@ -176,3 +226,5 @@ Returns <code>object</code>.
 //<code>.disconnect()</code>.
 //
 //    var inputNode = AudioObject.inputs.get(audioObject);
+*/
+-->
