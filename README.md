@@ -9,6 +9,7 @@ audio param value at the browser frame rate. Changes are
 <code>Object.observe</code>-able (or observable using that technique
 where the getter/setter is redefined).
 
+
 ## AudioObject(audioContext, inputNode, outputNode, params);
 
 Here is an example of a compressor and a gain wrapped into a single
@@ -43,6 +44,7 @@ browser frame rate for the duration of the automation.
 
 To read more about what you can pass in to <code>AudioObject()</code> as params,
 see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
+
 
 ### methods
 
@@ -96,6 +98,7 @@ Destroy is a noop by default. It should be overidden so that it destroys the nod
 in the audioObject's audio graph.
 
     audioObject.destroy()
+
 
 ### AudioObject functions
 
@@ -181,6 +184,7 @@ Returns <code>object</code>.
 
 Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
 in it's prototype chain.
+
 
 ### AudioObject properties
 
