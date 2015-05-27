@@ -97,7 +97,7 @@ in the audioObject's audio graph.
 
     audioObject.destroy()
 
-### AudioObject Functions
+### AudioObject functions
 
 #### AudioObject.automate(param, value, time, duration, curve)
 
@@ -115,11 +115,7 @@ defined, <code>curve</code> is set to <code>'step'</code>.
 - 'linear' uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 - 'exponential' uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 
-
-#### AudioObject.isAudioObject(object)
-
-Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
-in it's prototype chain.
+returns <code>undefined</code>;
 
 #### AudioObject.defineAudioProperties(object, audioContext, audioParams)
 
@@ -180,6 +176,28 @@ As <code>.defineAudioProperties()</code>, but defines a single property with
 name <code>name</code>.
 
 Returns <code>object</code>.
+
+#### AudioObject.isAudioObject(object)
+
+Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
+in it's prototype chain.
+
+### AudioObject properties
+
+#### AudioObject.features
+
+A key-value store of results from feature tests in the browser. Currently there is
+one feature test, <code>disconnectParameters</code>:
+
+    // Does the audioNode.disconnect() method accept parameters?
+    if (AudioObject.features.disconnectParameters) {
+        node1.disconnect(node2, output, input)
+    }
+    else {
+        node1.disconnect();
+        // Reconnect nodes that should not have been disconnected...
+    }
+
 
 <!--
 ## The problem
