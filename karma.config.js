@@ -15,7 +15,7 @@ module.exports = function(config) {
       'js/audio-object.js',
 
       'test/module.js',
-      'test/*.js'
+      'test/connect.js'
     ],
 
     // list of files to exclude
