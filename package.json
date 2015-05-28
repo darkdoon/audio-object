@@ -19,14 +19,17 @@
   "bugs": {
     "url": "https://github.com/soundio/audio-object/issues"
   },
-  "licenses": [{
+  "licenses": [
+    {
       "type": "MIT"
-  }],
+    }
+  ],
   "devDependencies": {
     "karma": "latest",
     "karma-chrome-launcher": "latest",
     "karma-coverage": "latest",
     "karma-firefox-launcher": "latest",
+    "karma-fixture": "^0.2.5",
     "karma-qunit": "latest",
     "karma-safari-launcher": "latest",
     "qunit": "latest",
