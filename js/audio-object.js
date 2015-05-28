@@ -1,6 +1,7 @@
 (function(window) {
 	"use strict";
 
+	if (!window.AudioContext) { return; }
 
 	// defineAudioProperty()
 	// defineAudioProperties()
@@ -34,7 +35,7 @@
 	}
 
 	function testDisconnectParameters() {
-		var audio = new OfflineAudioContext(1, 1, 44100);
+		var audio = new AudioContext();
 
 		try {
 			// This will error if disconnect(parameters) is
@@ -185,7 +186,6 @@
 		var connections = connectionMap.get(source);
 
 		if (!connections) {
-			console.log('source', source);
 			connections = createConnections(source);
 			connectionMap.set(source, connections);
 		}
@@ -228,7 +228,6 @@
 		var connections = getConnections(source);
 
 		if (isDefined(outIndex)) {
-			console.log(connections[outIndex], connections);
 			setChannelConnection(connections[outIndex], destination, inIndex);
 			return;
 		}
@@ -251,7 +250,7 @@
 		var chan = connections.length;
 
 		while (chan--) {
-			clearChannelConnection(connections[chan], destination, chan);
+			connections[chan].delete(destination);
 		}
 	}
 
@@ -363,7 +362,7 @@
 				setConnection(this, node2, outIndex, inIndex);
 			}
 			else {
-				output.connect(node2);
+				node1.connect(node2);
 				setConnection(this, node2);
 			}
 		},

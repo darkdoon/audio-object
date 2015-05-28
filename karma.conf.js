@@ -14,7 +14,7 @@ module.exports = function(config) {
     files: [
       'js/audio-object.js',
       'test/module.js',
-      'test/test-*.js'
+      'test/test-connect.js'
     ],
 
     // list of files to exclude
@@ -25,7 +25,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      //'js/audio-object.js': ['coverage']
+    //  'js/audio-object.js': ['coverage']
     },
 
     // test results reporter to use
@@ -34,7 +34,7 @@ module.exports = function(config) {
 
     // Commented for everyday use - the coverage reporter reduces scripts to one
     // line, meaning that karma gives false line numbers for errors
-    reporters: ['progress', 'coverage'],
+    reporters: ['progress'],  // 'coverage'
 
     // optionally, configure the reporter
     coverageReporter: {
@@ -57,7 +57,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome', 'Firefox', 'Safari'],
+    browsers: ['Chrome', 'Firefox'],
     //browsers: ['Firefox'],
 
     // Continuous Integration mode
