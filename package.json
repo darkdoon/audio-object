@@ -1,0 +1,38 @@
+{
+  "name": "audio-object",
+  "title": "AudioObject",
+  "description": "A wrapper for a graph of AudioNodes that exposes their AudioParam values as simple getter/setters on a plain ol' JS object",
+  "version": "0.1.0",
+  "homepage": "http://sound.io",
+  "author": {
+    "name": "Stephen Band",
+    "twitter": "stephband"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soundio/audio-object.git"
+  },
+  "keywords": [
+    "javascript",
+    "browser"
+  ],
+  "bugs": {
+    "url": "https://github.com/soundio/audio-object/issues"
+  },
+  "licenses": [{
+      "type": "MIT"
+  }],
+  "devDependencies": {
+    "karma": "latest",
+    "karma-chrome-launcher": "latest",
+    "karma-coverage": "latest",
+    "karma-firefox-launcher": "latest",
+    "karma-qunit": "latest",
+    "karma-safari-launcher": "latest",
+    "qunit": "latest",
+    "qunitjs": "latest"
+  },
+  "scripts": {
+    "test": "karma start"
+  }
+}
