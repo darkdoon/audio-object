@@ -10,7 +10,7 @@ audio param value at the browser frame rate. Changes are
 where the getter/setter is redefined).
 
 
-## AudioObject(context, inputNode, outputNode, params)
+## AudioObject(context, input, output, params)
 
 Here is an example of a compressor and a gain wrapped into a single
 audio object:
@@ -42,8 +42,22 @@ audio param behind the scenes. Automating a property via <code>.automate()</code
 updates the audio param and notifies any property observers of changes at the
 browser frame rate for the duration of the automation.
 
-To read more about what you can pass in to <code>AudioObject()</code> as params,
-see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
+An AudioObject can have more than one input and/or more than one output. They
+are named in a definition object.
+
+    var compressor = audio.createDynamicsCompressor();
+    var gain1 = audio.createGain();
+    var gain2 = audio.createGain();
+
+    AudioObject(audio, { default: compressor, sidechain: gain1 }, gain2);
+
+If inputs or outputs are defined in a definition object, the object must have
+a property <code>default</code>, which is the audio node that is used by
+<code>.connect()</code> by default.
+
+To read more about what can be passed into <code>AudioObject()</code> as
+<code>params</code>, see
+<a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
 
 
 ### Instance methods
@@ -54,23 +68,25 @@ An instance of AudioObject has the methods <code>.connect()</code>,
 
     var audioObject = AudioObject(audio, input, output, params);
 
-#### .connect(audioNode | audioObject)
+#### .connect()
 
-Like <code>node1.connect(node2)</code>:
+A bit like a Web Audio node's <code>.connect()</code> method, allows connections
+to other AudioObjects and also to Web Audio nodes:
 
     var delayNode = audioContext.createDelay();
     audioObject.connect(delayNode);
 
-But <code>audioObject.connect()</code> will also accept another audioObject to
-connect to. audioObject's outputNode is connected directly to <code>audioNode</code>
-or to <code>audioObject</code>'s input node.
+- <code>.connect(destination)</code> Connects the <code>"default"</code> output
+to <code>destination</code>'s <code>"default"</code> input if it's an
+AudioObject (or directly to <code>destination</code> if it is an AudioNode).
+- <code>.connect(outputName, destination)</code> Connects the output named
+<code>outputName</code> to <code>destination</code>'s <code>"default"</code>
+input if it's an AudioObject (or directly to destination if it is an AudioNode).
+- <code>.connect(outputName, destination, inputName)</code> Connects the output
+named <code>outputName</code> to <code>destination</code>'s
+<code>inputName</code> input.
 
-    var delayNode = audio.createDelay();
-    var delayObject = new AudioObject(audio, delayNode, delayNode, {
-        time: delayNode.delayTime
-    });
-    
-    audioObject.connect(delayObject);
+Input and output names were defined when the AudioObject was first constructed.
 
 #### .disconnect()
 
@@ -78,6 +94,20 @@ Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
 outputNode.
 
     audioObject.disconnect(delay);
+
+- <code>.disconnect(destination)</code> Disconnects the <code>"default"</code>
+output from <code>destination</code>'s <code>"default"</code>
+input if it's an AudioObject (or from <code>destination</code> if it's an
+AudioNode).
+- <code>.disconnect(outputName, destination)</code> Disconnects output
+<code>outputName</code> from <code>destination</code>'s
+<code>"default"</code> input if it's an AudioObject (or from
+<code>destination</code> if it's an AudioNode).
+- <code>.disconnect(outputName, destination, inputName)</code> Disconnects output
+<code>outputName</code> from <code>destination</code>'s <code>inputName</code>
+input.
+
+Input and output names were defined when the AudioObject was first constructed.
 
 #### .automate(name, value, duration, [curve])
 
