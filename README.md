@@ -46,11 +46,17 @@ are named in a definition object.
     var gain1 = audio.createGain();
     var gain2 = audio.createGain();
 
-    AudioObject(audio, { default: compressor, sidechain: gain1 }, gain2);
+    // Do something with gain1 to make it sidechain the compressor...
 
-If inputs or outputs are defined in a definition object, the object must have
-a property <code>default</code>, which is the audio node that is used by
-<code>.connect()</code> by default.
+    compressor.connect(gain2);
+
+    var audioObject = new AudioObject(audio, {
+        default: compressor,
+        sidechain: gain1
+    }, gain2);
+
+A definition object must have a <code>default</code> property. The default input
+or output is used by <code>.connect()</code> by default.
 
 To read more about what can be passed into <code>AudioObject()</code> as
 <code>params</code>, see
