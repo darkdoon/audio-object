@@ -114,9 +114,9 @@ to start the automation now.
 defined, <code>curve</code> is set to <code>'step'</code>. 
 <code>curve</code> is the name of the automation curve. Choices are:
 
-- 'step' uses param.setValueAtTime() to set <code>value</code> immediately
-- 'linear' uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
-- 'exponential' uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>'step'</code>'step' uses param.setValueAtTime() to set <code>value</code> immediately
+- <code>'linear'</code> uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>'exponential'</code> uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 
 returns <code>undefined</code>;
 
