@@ -69,11 +69,19 @@ module('AudioObject', function(fixture) {
 	var object0 = AudioObject(audio, undefined, n0);
 	var object1 = AudioObject(audio, n1);
 
+
+
+
+
+
+
+	// Tests
+
 	asyncTest('Testing .connect(node)', 1, function() {
 		object0.connect(n1);
 
 		setTimeout(function() {
-			ok(isReceivingSignal(), 'Not receiving any signal! Buffer sum: ' + (Array.prototype.reduce.call(buffer, sum, 0)));
+			ok(isReceivingSignal(), 'Not receiving any signal!');
 			start();
 		}, 50);
 	});
@@ -91,7 +99,7 @@ module('AudioObject', function(fixture) {
 		object0.connect(n2);
 		object0.disconnect(n2);
 		setTimeout(function() {
-			ok(isReceivingSignal(), 'Not receiving any signal! Buffer sum: ' + (Array.prototype.reduce.call(buffer, sum, 0)));
+			ok(isReceivingSignal(), 'Not receiving any signal!');
 			start();
 		}, 50);
 	});
@@ -164,6 +172,36 @@ module('AudioObject', function(fixture) {
 
 		setTimeout(function() {
 			ok(!isReceivingSignal(), 'Signal should have been disconnected.');
+			start();
+		}, 50);
+	});
+
+
+	asyncTest('Testing .connect(name, object)', 4, function() {
+		object0.disconnect();
+
+		var n3 = audio.createGain();
+		var n4 = audio.createGain();
+		var n5 = audio.createGain();
+
+		n3.connect(n5);
+
+		var object3 = AudioObject(audio, n3, {
+			default: n4,
+			send: n5
+		});
+
+		var map = AudioObject.outputs.get(object3);
+
+		ok(AudioObject.inputs.get(object3),  'Yoiks scoob! AudioObject.inputs doesnt have a reference to object3!');
+		ok(AudioObject.outputs.get(object3), 'Yoiks scoob! AudioObject.outputs doesnt have a reference to object3!');
+		ok(Object.keys(map).join(' ') === 'default send', 'object3 shoudl have outputs "default" and "send"');
+
+		object0.connect(object3);
+		object3.connect('send', object1);
+
+		setTimeout(function() {
+			ok(isReceivingSignal(), 'Not receiving any signal!');
 			start();
 		}, 50);
 	});

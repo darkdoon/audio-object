@@ -24,18 +24,20 @@
 
 	function noop() {}
 
-	function isDefined(value) {
-		return value !== undefined && value !== null;
-	}
-
 	function toType(object) {
 		return typeof object;
+	}
+
+	function isDefined(value) {
+		return value !== undefined && value !== null;
 	}
 
 	function extend(object1, object2) {
 		Object.keys(object2).forEach(function(key) {
 			object1[key] = object2[key];
 		});
+
+		return object1;
 	}
 
 	function overloadByType(signatures, returnFlag) {
@@ -198,54 +200,15 @@
 	var outputs = new WeakMap();
 	var connectionMap = new WeakMap();
 
-	function createConnections(object) {
-		var output = outputs.get(object);
-		var n = output.numberOfOutputs;
-		var connections = [];
-		while (n--) { connections.push(new Map()); }
-		return connections;
-	}
-
 	function getConnections(source) {
-		var connections = connectionMap.get(source);
+		var connections = AudioObject.connections.get(source);
 
 		if (!connections) {
-			connections = createConnections(source);
-			connectionMap.set(source, connections);
+			connections = {};
+			AudioObject.set(source, connections);
 		}
 
 		return connections;
-	}
-
-	function setChannelConnection(connections, destination, channel) {
-		var array = connections.get(destination);
-
-		if (!array) {
- 			array = [];
- 			connections.set(destination, array);
-		}
-
-		if (array.indexOf(channel) === -1) {
-			array.push(channel);
-		}
-	}
-
-	function clearChannelConnection(connections, destination, channel) {
-		if (!destination) {
-			connections.clear();
-			return;
-		}
-
-		if (!isDefined(channel)) {
-			connections.delete(destination);
-		}
-
-		var array = connections.get(destination);
-		var i = array.indexOf(channel);
-
-		if (i === -1) { return; }
-
-		array.splice(i, 1);
 	}
 
 	function setConnection(source, outName, outNumber, inNode, inNumber) {
@@ -269,14 +232,19 @@
 		var outMap = connections[outName];
 
 		if (!outMap) {
-			console.warn('AudioObject: there are no connections from "' + outName + '".');
+			console.warn('AudioObject: .disconnect() There are no connections from "' + outName + '". Doing nothing.');
+			return;
+		}
+
+		if (!inNode) {
+			outMap.clear();
 			return;
 		}
 
 		var numberMap = outMap.get(inNode);
 
 		if (!numberMap) {
-			console.warn('AudioObject: not connected to inNode.');
+			console.warn('AudioObject: .disconnect() Not connected to inNode.');
 			return;
 		}
 
@@ -291,65 +259,60 @@
 		}
 	}
 
-	function disconnectDestination(source, output, input, outNumber, inNumber) {
+	function disconnectDestination(source, outName, outNode, inNode, outNumber, inNumber) {
+		outNode.disconnect();
+
+		if (!inNode) { return; }
+
 		var connections = getConnections(source);
-		var n = connections.length;
-		var map, destination, array, i;
+		var outMap = connections[outName];
+		var entry;
 
-		output.disconnect();
+		if (!outMap) { return; }
 
-		// Reconnect destinations apart from input
-		while (n--) {
-			for (map of connections[n]) {
-				destination = map[0];
-				array = map[1];
-
-				if (destination === input) { continue; }
-
-				i = array.length;
-				while (i--) {
-					output.connect(destination, n, array[i]);
-				}
-			}
+		// Reconnect all entries apart from the node we just
+		// disconnected.
+		for (entry of outMap) {
+			if (entry[0] === inNode) { continue; }
+			outNode.connect(entry[0]);
 		}
+	}
+
+	function getNode(store, object, name) {
+		var nodes = store.get(object);
+		if (!nodes) { return; }
+
+		var node = nodes[name];
+		return node;
+	}
+
+	function getInNode(object, name) {
+		return isAudioNode(object) ? object : getNode(AudioObject.inputs, object, name) ;
+	}
+
+	function getOutNode(object, name) {
+		// Out object is always an AudioObject
+		return getNode(AudioObject.outputs, object, name) ;
 	}
 
 	function connect(source, outName, outNumber, destination, inName, inNumber) {
 		// Support both AudioObjects and native AudioNodes.
-		var inputs, inNode;
+		var inNode = getInNode(destination, inName);
 
-		if (isAudioNode(destination)) {
-			inNode = destination;
-
-			//if (inName) {
-			//	console.warn('AudioObject: trying to .connect() but destination is an AudioNode, and cannot have an input named "' + inName + '".');
-			//}
-		}
-		else {
-			inputs = AudioObject.inputs.get(destination);
-
-			if (!inputs) {
-				console.warn('AudioObject: trying to .connect() an object with no inputs.', destination);
-			}
-
-			inNode = inputs[inName];
-
-			if (!inNode) {
-				console.warn('AudioObject: trying to .connect() but input node "' + inName + '" not found.', inputs);
-			}
-		}
-
-		var outputs = AudioObject.outputs.get(source);
-
-		if (!outputs) {
-			console.warn('AudioObject: trying to .connect() from an object without outputs.', source);
+		if (!inNode) {
+			console.warn('AudioObject: trying to .connect() an object without input "' + inName + '". Dropping connection.', destination);
 			return;
 		}
 
-		var outNode = outputs[outName];
+		var outNode = getOutNode(source, outName);
+
+		if (!outNode) {
+			console.warn('AudioObject: trying to .connect() from an object without output "' + outName + '". Dropping connection.', source);
+			return;
+		}
 
 		if (isDefined(outNumber) && isDefined(inNumber)) {
-			if (outNumber >= node1.numberOfOutputs) {
+			if (outNumber >= outNode.numberOfOutputs) {
 				console.warn('AudioObject: Trying to .connect() from a non-existent output (' +
 					outNumber + ') on output node {numberOfOutputs: ' + outNode.numberOfOutputs + '}. Dropping connection.');
 				return;
@@ -365,60 +328,36 @@
 			setConnection(source, outName, outNumber, inNode, inNumber);
 		}
 		else {
-			node1.connect(inNode);
+			outNode.connect(inNode);
 			setConnection(source, outName, 0, inNode);
 		}
 	}
 
 	function disconnect(source, outName, outNumber, destination, inName, inNumber) {
-		var outputs = AudioObject.outputs.get(source);
-
-		if (!outputs) {
-			console.warn('AudioObject: trying to .disconnect() from an object without outputs.', source);
-			return;
-		}
-
-		var outNode = outputs[outName];
+		var outNode = getOutNode(source, outName);
 
 		if (!outNode) {
-			console.warn('AudioObject: trying to .disconnect() but output node "' + outName + '" not found.', outputs);
+			console.warn('AudioObject: trying to .disconnect() from an object without output "' + outName + '". Dropping connection.', source);
 			return;
 		}
 
 		if (!destination) {
 			outNode.disconnect();
-			removeConnection(source);
+			removeConnection(source, outName);
 			return;
 		}
 
-		var inputs, inNode;
+		var inNode = destination && getInNode(destination, inName);
 
-		if (isAudioNode(destination)) {
-			inNode = destination;
-
-			//if (inName) {
-			//	console.warn('AudioObject: trying to .disconnect() but destination is an AudioNode, and cannot have an input named "' + inName + '".');
-			//}
-		}
-		else {
-			inputs = AudioObject.inputs.get(destination);
-
-			if (!inputs) {
-				console.warn('AudioObject: trying to .disconnect() an object with no inputs.');
-			}
-
-			inNode = inputs[inName];
-
-			if (!inNode) {
-				console.warn('AudioObject: trying to .disconnect() but input node "' + inName + '" not found.', inputs);
-			}
+		if (!inNode) {
+			console.warn('AudioObject: trying to .disconnect() an object with no inputs.', destination);
 		}
 
 		if (features.disconnectParameters) {
 			outNode.disconnect(inNode, outNumber, inNumber);
 		}
 		else {
-			disconnectDestination(source, outNode, inNode, outNumber, inNumber);
+			disconnectDestination(source, outName, outNode, inNode, outNumber, inNumber);
 		}
 
 		removeConnection(source, outName, outNumber, inNode, inNumber);
@@ -439,7 +378,7 @@
 			throw new Error('AudioObject: new AudioObject() must be given an input OR output OR both.');
 		}
 
-		// Keep a map of input without exposing them.
+		// Keep a map of inputs in AudioObject.inputs
 		if (input) {
 			AudioObject.inputs.set(this, isAudioNode(input) ?
 				{ default: input } :
@@ -447,7 +386,7 @@
 			);
 		}
 
-		// Keep a map of output without exposing them.
+		// Keep a map of outputs in AudioObject.outputs
 		if (output) {
 			AudioObject.outputs.set(this, isAudioNode(output) ?
 				{ default: output } :
@@ -482,7 +421,7 @@
 			var fn = automators[name];
 
 			if (!fn) {
-				// Only proerties that have been registered
+				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
 				throw new Error('AudioObject: property ' + name + ' is not automatable.');
 				return;
@@ -491,6 +430,9 @@
 			fn(value, time, curve);
 			return this;
 		},
+
+		// Like AudioNode.connect(), but accepts parameters for output name
+		// and input name.
 
 		connect: overloadByType({
 			'object': function run() {
@@ -524,6 +466,9 @@
 				connect(this, outName, outNumber, destination, inName, inNumber);
 			}
 		}, true),
+
+		// Like AudioNode.disconnect(), but accepts parameters for output name
+		// and input name.
 
 		// In a nutshell, the AudioNode spec boils down to:
 		// .disconnect([AudioNode || AudioParam], [outNumber], [inNumber])

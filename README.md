@@ -10,7 +10,7 @@ audio param value at the browser frame rate. Changes are
 where the getter/setter is redefined).
 
 
-## AudioObject(audioContext, inputNode, outputNode, params);
+## AudioObject(context, inputNode, outputNode, params)
 
 Here is an example of a compressor and a gain wrapped into a single
 audio object:
