@@ -57,6 +57,8 @@ An input or output definition object must have a <code>default</code> property.
 Default inputs and outputs are used by <code>.connect()</code> and
 <code>.disconnect()</code> by default.
 
+#### Exposing audio params as properties
+
 To read more about what can be passed into <code>AudioObject()</code> as
 <code>params</code>, see
 <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
