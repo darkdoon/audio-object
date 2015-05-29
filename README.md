@@ -102,7 +102,7 @@ outputNode.
     audioObject.disconnect(delay);
 
 <code>.disconnect(destination)</code><br/>
-Disconnects the <code>"default"</code> output from <code>destination</code>'s
+Disconnects the <code>default</code> output from <code>destination</code>'s
 <code>default</code> input.
 
 <code>.disconnect(outputName, destination)</code><br/>
