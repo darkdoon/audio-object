@@ -96,8 +96,8 @@ Input and output names were defined when the AudioObject was first constructed.
 
 #### .disconnect()
 
-Like <code>node1.disconnect()</code>. Calls <code>.disconnect()</code> on the
-outputNode.
+A bit like a Web Audio node's <code>.disconnect()</code> method, although it
+disconnects AudioObjects as well as AudioNodes.
 
     audioObject.disconnect(delay);
 
