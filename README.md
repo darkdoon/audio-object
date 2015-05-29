@@ -188,6 +188,12 @@ in it's prototype chain.
 
 ### AudioObject properties
 
+#### AudioObject.connections
+
+A WeakMap of output connections keyed against instances of AudioObject. Use it to get the current connection state of any AudioObject:
+
+    var connections = AudioObject.connections.get(object);
+
 #### AudioObject.features
 
 A key-value store of results from feature tests in the browser. Currently there is
