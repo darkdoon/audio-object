@@ -15,21 +15,18 @@ where the getter/setter is redefined).
 Here is an example of a compressor and a gain wrapped into a single
 audio object:
 
-    function createCompressGain() {
-        var compressor = audio.createDynamicsCompressor();
-        var gain = audio.createGain();
+    var compressor = audio.createDynamicsCompressor();
+    var gain = audio.createGain();
 
-        compressor.connect(gain);
+    compressor.connect(gain);
 
-        return AudioObject(audio, compressor, gain, {
-            threshold: compressor.threshold,
-            ratio: compressor.ratio,
-            level: gain.gain
-        });
-    }
+    var audioObject = AudioObject(audio, compressor, gain, {
+        threshold: compressor.threshold,
+        ratio: compressor.ratio,
+        level: gain.gain
+    });
 
-The result of <code>createCompressGain()</code> is an object with the
-enumerable properties:
+Now <code>audioObject</code> is an object with the enumerable properties:
 
     {
         threshold: -20,
