@@ -53,8 +53,8 @@ are named in a definition object.
         sidechain: gain1
     }, gain2);
 
-A definition object must have a <code>default</code> property. The default input
-or output is used by <code>.connect()</code> by default.
+An input or output definition object must have a <code>default</code> property.
+The default input or output is used by <code>.connect()</code>.
 
 To read more about what can be passed into <code>AudioObject()</code> as
 <code>params</code>, see
