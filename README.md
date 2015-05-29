@@ -46,9 +46,7 @@ are named in a definition object.
     var gain1 = audio.createGain();
     var gain2 = audio.createGain();
 
-    // Do something with gain1 to make it sidechain the compressor...
-
-    compressor.connect(gain2);
+    // Connect the nodes together...
 
     var audioObject = new AudioObject(audio, {
         default: compressor,
