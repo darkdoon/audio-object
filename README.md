@@ -42,18 +42,16 @@ browser frame rate for the duration of the automation.
 #### Multiple inputs and outputs
 
 An AudioObject can have more than one input and/or more than one output. They
-are named in a definition object.
+are named in a definition object:
 
     var compressor = audio.createDynamicsCompressor();
-    var gain1 = audio.createGain();
-    var gain2 = audio.createGain();
-
-    // Connect the nodes together...
+    var sideGain = audio.createGain();
+    var outGain = audio.createGain();
 
     var audioObject = new AudioObject(audio, {
         default: compressor,
-        sidechain: gain1
-    }, gain2);
+        sidechain: sideGain
+    }, outGain);
 
 An input or output definition object must have a <code>default</code> property.
 Default inputs and outputs are used by <code>.connect()</code> and
