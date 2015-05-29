@@ -38,6 +38,18 @@
 		});
 	}
 
+	function overloadByType(signatures, returnFlag) {
+		return function method() {
+			var signature = map(arguments, toType).join(' ');
+			var fn = signatures[signature] || signatures.default;
+
+			if (!fn) { throw new Error('overload: Function for type signature "' + signature + '" not found, and no default defined.'); }
+
+			var result = fn.apply(this, arguments);
+			return returnFlag ? this : result ;
+		};
+	}
+
 	function isAudioNode(object) {
 		return window.AudioNode.prototype.isPrototypeOf(object);
 	}
@@ -334,12 +346,12 @@
 			return;
 		}
 
-		var node1 = outputs[outName];
+		var outNode = outputs[outName];
 
 		if (isDefined(outNumber) && isDefined(inNumber)) {
 			if (outNumber >= node1.numberOfOutputs) {
 				console.warn('AudioObject: Trying to .connect() from a non-existent output (' +
-					outNumber + ') on output node {numberOfOutputs: ' + node1.numberOfOutputs + '}. Dropping connection.');
+					outNumber + ') on output node {numberOfOutputs: ' + outNode.numberOfOutputs + '}. Dropping connection.');
 				return;
 			}
 
@@ -349,7 +361,7 @@
 				return;
 			}
 
-			node1.connect(inNode, outNumber, inNumber);
+			outNode.connect(inNode, outNumber, inNumber);
 			setConnection(source, outName, outNumber, inNode, inNumber);
 		}
 		else {
@@ -427,7 +439,7 @@
 			throw new Error('AudioObject: new AudioObject() must be given an input OR output OR both.');
 		}
 
-		// Keep a map of input and output nodes without exposing them.
+		// Keep a map of input without exposing them.
 		if (input) {
 			AudioObject.inputs.set(this, isAudioNode(input) ?
 				{ default: input } :
@@ -435,6 +447,7 @@
 			);
 		}
 
+		// Keep a map of output without exposing them.
 		if (output) {
 			AudioObject.outputs.set(this, isAudioNode(output) ?
 				{ default: output } :
@@ -458,6 +471,7 @@
 	var prototype = {
 		automate: function(name, value, time, curve) {
 			var automators = automatorMap.get(this);
+
 			if (!automators) {
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
@@ -466,6 +480,7 @@
 			}
 
 			var fn = automators[name];
+
 			if (!fn) {
 				// Only proerties that have been registered
 				// by defineAudioProperty() can be automated.
@@ -474,82 +489,89 @@
 			}
 
 			fn(value, time, curve);
-		},
-
-		connect: function(outName, outNumber, destination, inName, inNumber) {
-			var signature = map(arguments, toType).join(' ');
-
-			switch (signature) {
-				case 'object':
-					connect(this, 'default', undefined, arguments[0], 'default');
-					break;
-				case 'object string':
-				case 'object string number':
-					connect(this, 'default', undefined, arguments[0], arguments[1], arguments[2]);
-					break;
-				case 'object number':
-				case 'object number number':
-					connect(this, 'default', arguments[1], arguments[0], 'default', arguments[2]);
-					break;
-				case 'string object':
-				case 'string object number':
-					connect(this, arguments[0], undefined, arguments[1], 'default', arguments[2]);
-					break;
-				case 'string object string':
-				case 'string object string number':
-					connect(this, arguments[0], undefined, arguments[1], arguments[2], arguments[3]);
-					break;
-				default:
-					connect(this, outName, outNumber, destination, inName, inNumber);
-			}
-
 			return this;
 		},
 
-		disconnect: function(outName, outNumber, destination, inName, inNumber) {
-			// In a nutshell, the AudioNode spec boils down to:
-			// .disconnect([AudioNode || AudioParam], [outNumber], [inNumber])
-			// All parameters are optional, although some combinations are
-			// not supported. Here's those that are:
-			//
-			// .disconnect()
-			// .disconnect(output)
-			// .disconnect(AudioNode, output)
-			// .disconnect(AudioNode, output, input)
-			// .disconnect(AudioParam)
-			// .disconnect(AudioParam, output)
-
-			var signature = map(arguments, toType).join(' ');
-
-			switch (signature) {
-				case '':
-					disconnect(this, 'default');
-					break;
-				case 'object':
-					disconnect(this, 'default', undefined, arguments[0], 'default');
-					break;
-				case 'object string':
-				case 'object string number':
-					disconnect(this, 'default', undefined, arguments[0], arguments[1], arguments[2]);
-					break;
-				case 'object number':
-				case 'object number number':
-					disconnect(this, 'default', arguments[1], arguments[0], 'default', arguments[2]);
-					break;
-				case 'string object':
-				case 'string object number':
-					disconnect(this, arguments[0], undefined, arguments[1], 'default', arguments[2]);
-					break;
-				case 'string object string':
-				case 'string object string number':
-					disconnect(this, arguments[0], undefined, arguments[1], arguments[2], arguments[3]);
-					break;
-				default:
-					disconnect(this, outName, outNumber, destination, inName, inNumber);
+		connect: overloadByType({
+			'object': function run() {
+				connect(this, 'default', undefined, arguments[0], 'default');
+			},
+			'object string': function run() {
+				connect(this, 'default', undefined, arguments[0], arguments[1]);
+			},
+			'object string number': function run() {
+				connect(this, 'default', undefined, arguments[0], arguments[1], arguments[2]);
+			},
+			'object number': function run() {
+				connect(this, 'default', arguments[1], arguments[0], 'default');
+			},
+			'object number number': function run() {
+				connect(this, 'default', arguments[1], arguments[0], 'default', arguments[2]);
+			},
+			'string object': function run() {
+				connect(this, arguments[0], undefined, arguments[1], 'default');
+			},
+			'string object number': function run() {
+				connect(this, arguments[0], undefined, arguments[1], 'default', arguments[2]);
+			},
+			'string object string': function run() {
+				connect(this, arguments[0], undefined, arguments[1], arguments[2]);
+			},
+			'string object string number': function run() {
+				connect(this, arguments[0], undefined, arguments[1], arguments[2], arguments[3]);
+			},
+			default: function run(outName, outNumber, destination, inName, inNumber) {
+				connect(this, outName, outNumber, destination, inName, inNumber);
 			}
+		}, true),
 
-			return this;
-		},
+		// In a nutshell, the AudioNode spec boils down to:
+		// .disconnect([AudioNode || AudioParam], [outNumber], [inNumber])
+		// All parameters are optional, although some combinations are
+		// not supported. Here's those that are:
+		//
+		// .disconnect()
+		// .disconnect(output)
+		// .disconnect(AudioNode, output)
+		// .disconnect(AudioNode, output, input)
+		// .disconnect(AudioParam)
+		// .disconnect(AudioParam, output)
+
+		disconnect: overloadByType({
+			'': function run() {
+				disconnect(this, 'default');
+			},
+			'object': function run() {
+				disconnect(this, 'default', undefined, arguments[0], 'default');
+			},
+			'object string': function run() {
+				disconnect(this, 'default', undefined, arguments[0], arguments[1]);
+			},
+			'object string number': function run() {
+				disconnect(this, 'default', undefined, arguments[0], arguments[1], arguments[2]);
+			},
+			'object number': function run() {
+				disconnect(this, 'default', arguments[1], arguments[0], 'default');
+			},
+			'object number number': function run() {
+				disconnect(this, 'default', arguments[1], arguments[0], 'default', arguments[2]);
+			},
+			'string object': function run() {
+				disconnect(this, arguments[0], undefined, arguments[1], 'default');
+			},
+			'string object number': function run() {
+				disconnect(this, arguments[0], undefined, arguments[1], 'default', arguments[2]);
+			},
+			'string object string': function run() {
+				disconnect(this, arguments[0], undefined, arguments[1], arguments[2], arguments[3]);
+			},
+			'string object string number': function run() {
+				disconnect(this, arguments[0], undefined, arguments[1], arguments[2], arguments[3]);
+			},
+			default: function run(outName, outNumber, destination, inName, inNumber) {
+				disconnect(this, outName, outNumber, destination, inName, inNumber);
+			}
+		}, true),
 
 		destroy: noop
 	};
