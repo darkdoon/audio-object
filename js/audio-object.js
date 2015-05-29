@@ -236,33 +236,46 @@
 		array.splice(i, 1);
 	}
 
-	function setConnection(source, destination, outNumber, inNumber) {
+	function setConnection(source, outName, outNumber, inNode, inNumber) {
 		var connections = getConnections(source);
+		var outMap = connections[outName] || (connections[outName] = new Map());
+		var numberMap = outMap.get(inNode);
+		var tempMap = {};
 
-		if (isDefined(outNumber)) {
-			setChannelConnection(connections[outNumber], destination, inNumber);
-			return;
+		tempMap[outNumber || 0] = inNumber || 0;
+
+		if (numberMap) {
+			extend(numberMap, tempMap);
 		}
-
-		var chan = connections.length;
-
-		while (chan--) {
-			setChannelConnection(connections[chan], destination, chan);
+		else {
+			outMap.set(inNode, tempMap);
 		}
 	}
 
-	function removeConnection(source, destination, outNumber, inNumber) {
+	function removeConnection(source, outName, outNumber, inNode, inNumber) {
 		var connections = getConnections(source);
+		var outMap = connections[outName];
 
-		if (isDefined(outNumber)) {
-			clearChannelConnection(connections[outNumber], destination, outNumber);
+		if (!outMap) {
+			console.warn('AudioObject: there are no connections from "' + outName + '".');
 			return;
 		}
 
-		var chan = connections.length;
+		var numberMap = outMap.get(inNode);
 
-		while (chan--) {
-			connections[chan].delete(destination);
+		if (!numberMap) {
+			console.warn('AudioObject: not connected to inNode.');
+			return;
+		}
+
+		outNumber = outNumber || 0;
+
+		if (isDefined(outNumber)) {
+			delete numberMap[outNumber];
+		}
+
+		if (Object.keys(numberMap).length === 0) {
+			outMap.delete(inNode);
 		}
 	}
 
@@ -337,11 +350,11 @@
 			}
 
 			node1.connect(inNode, outNumber, inNumber);
-			setConnection(source, inNode, outNumber, inNumber);
+			setConnection(source, outName, outNumber, inNode, inNumber);
 		}
 		else {
 			node1.connect(inNode);
-			setConnection(source, inNode);
+			setConnection(source, outName, 0, inNode);
 		}
 	}
 
@@ -396,7 +409,7 @@
 			disconnectDestination(source, outNode, inNode, outNumber, inNumber);
 		}
 
-		removeConnection(source, inNode, outNumber, inNumber);
+		removeConnection(source, outName, outNumber, inNode, inNumber);
 	}
 
 	function isAudioObject(object) {
@@ -427,6 +440,8 @@
 				{ default: output } :
 				extend({}, output)
 			);
+
+			AudioObject.connections.set(this, {});
 		}
 		else {
 			this.connect = this.disconnect = noop;
@@ -508,7 +523,7 @@
 
 			switch (signature) {
 				case '':
-					connect(this, 'default');
+					disconnect(this, 'default');
 					break;
 				case 'object':
 					disconnect(this, 'default', undefined, arguments[0], 'default');
