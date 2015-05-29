@@ -75,19 +75,21 @@ An instance of AudioObject has the methods <code>.connect()</code>,
 
 #### .connect()
 
-A bit like a Web Audio node's <code>.connect()</code> method, allows connections
-to other AudioObjects and also to Web Audio nodes:
+A bit like a Web Audio node's <code>.connect()</code> method, although it
+handles connections to AudioObjects as well as AudioNodes:
 
     var delayNode = audioContext.createDelay();
     audioObject.connect(delayNode);
 
-- <code>.connect(destination)</code> Connects the <code>"default"</code> output
+<code>.connect(destination)</code> Connects the <code>"default"</code> output
 to <code>destination</code>'s <code>"default"</code> input if it's an
 AudioObject (or directly to <code>destination</code> if it is an AudioNode).
-- <code>.connect(outputName, destination)</code> Connects the output named
+
+<code>.connect(outputName, destination)</code> Connects the output named
 <code>outputName</code> to <code>destination</code>'s <code>"default"</code>
 input if it's an AudioObject (or directly to destination if it is an AudioNode).
-- <code>.connect(outputName, destination, inputName)</code> Connects the output
+
+<code>.connect(outputName, destination, inputName)</code> Connects the output
 named <code>outputName</code> to <code>destination</code>'s
 <code>inputName</code> input.
 
@@ -100,15 +102,17 @@ outputNode.
 
     audioObject.disconnect(delay);
 
-- <code>.disconnect(destination)</code> Disconnects the <code>"default"</code>
+<code>.disconnect(destination)</code> Disconnects the <code>"default"</code>
 output from <code>destination</code>'s <code>"default"</code>
 input if it's an AudioObject (or from <code>destination</code> if it's an
 AudioNode).
-- <code>.disconnect(outputName, destination)</code> Disconnects output
+
+<code>.disconnect(outputName, destination)</code> Disconnects output
 <code>outputName</code> from <code>destination</code>'s
 <code>"default"</code> input if it's an AudioObject (or from
 <code>destination</code> if it's an AudioNode).
-- <code>.disconnect(outputName, destination, inputName)</code> Disconnects output
+
+<code>.disconnect(outputName, destination, inputName)</code> Disconnects output
 <code>outputName</code> from <code>destination</code>'s <code>inputName</code>
 input.
 
