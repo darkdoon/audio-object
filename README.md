@@ -54,7 +54,8 @@ are named in a definition object.
     }, gain2);
 
 An input or output definition object must have a <code>default</code> property.
-The default input or output is used by <code>.connect()</code>.
+The default input or output is used by <code>.connect()</code> and
+<code>.disconnect()</code> by default.
 
 To read more about what can be passed into <code>AudioObject()</code> as
 <code>params</code>, see
