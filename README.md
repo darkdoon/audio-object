@@ -39,6 +39,8 @@ audio param behind the scenes. Automating a property via <code>.automate()</code
 updates the audio param and notifies any property observers of changes at the
 browser frame rate for the duration of the automation.
 
+#### Multiple inputs and outputs
+
 An AudioObject can have more than one input and/or more than one output. They
 are named in a definition object.
 
@@ -54,7 +56,7 @@ are named in a definition object.
     }, gain2);
 
 An input or output definition object must have a <code>default</code> property.
-The default input or output is used by <code>.connect()</code> and
+Default inputs and outputs are used by <code>.connect()</code> and
 <code>.disconnect()</code> by default.
 
 To read more about what can be passed into <code>AudioObject()</code> as
