@@ -15,6 +15,7 @@ where the getter/setter is redefined).
 Here is an example of a compressor and a gain wrapped into a single
 audio object:
 
+    var audio = new AudioContext();
     var compressor = audio.createDynamicsCompressor();
     var gain = audio.createGain();
 
