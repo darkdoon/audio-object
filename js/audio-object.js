@@ -274,6 +274,8 @@
 		// disconnected.
 		for (entry of outMap) {
 			if (entry[0] === inNode) { continue; }
+			// TODO: connect outNumber to inNumber based on
+			// entry[1].
 			outNode.connect(entry[0]);
 		}
 	}
