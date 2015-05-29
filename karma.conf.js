@@ -35,12 +35,25 @@ module.exports = function(config) {
 
     // Commented for everyday use - the coverage reporter reduces scripts to one
     // line, meaning that karma gives false line numbers for errors
-    reporters: ['progress'],  // 'coverage'
+    reporters: ['nested'],  // 'progress', 'coverage'
 
     // optionally, configure the reporter
     coverageReporter: {
       type : 'lcov',
       dir : 'test-coverage/'
+    },
+
+    nestedReporter: {
+      color: {
+        should: 'red',
+        browser: 'yellow'
+      },
+
+      icon: {
+        failure: '✘ ',
+        indent: '  ',
+        browser: ''
+      }
     },
 
     // web server port
