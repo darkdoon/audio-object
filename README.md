@@ -46,7 +46,7 @@ To read more about what you can pass in to <code>AudioObject()</code> as params,
 see <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
 
 
-### methods
+### Instance methods
 
 An instance of AudioObject has the methods <code>.connect()</code>,
 <code>.disconnect()</code>, <code>.automate()</code> and
@@ -102,7 +102,7 @@ in the audioObject's audio graph.
 
 ### AudioObject functions
 
-#### AudioObject.automate(param, value, time, duration, curve)
+#### .automate(param, value, time, duration, curve)
 
 Automates a value change on an AudioParam.
 
@@ -114,13 +114,13 @@ to start the automation now.
 defined, <code>curve</code> is set to <code>'step'</code>. 
 <code>curve</code> is the name of the automation curve. Choices are:
 
-- 'step' uses param.setValueAtTime() to set <code>value</code> immediately
-- 'linear' uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
-- 'exponential' uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>'step'</code>'step' uses param.setValueAtTime() to set <code>value</code> immediately
+- <code>'linear'</code> uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>'exponential'</code> uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 
 returns <code>undefined</code>;
 
-#### AudioObject.defineAudioProperties(object, audioContext, audioParams)
+#### .defineAudioProperties(object, audioContext, audioParams)
 
 <code>.defineAudioProperties()</code> takes a map of audio params and defines
 properties on <code>object</code> that are bound to the values of those params.
@@ -173,14 +173,14 @@ that.
 
 Returns <code>object</code>.
 
-#### AudioObject.defineAudioProperty(object, name, audioContext, audioParam)
+#### .defineAudioProperty(object, name, audioContext, audioParam)
 
 As <code>.defineAudioProperties()</code>, but defines a single property with
 name <code>name</code>.
 
 Returns <code>object</code>.
 
-#### AudioObject.isAudioObject(object)
+#### .isAudioObject(object)
 
 Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
 in it's prototype chain.
@@ -188,7 +188,13 @@ in it's prototype chain.
 
 ### AudioObject properties
 
-#### AudioObject.features
+#### .connections
+
+A WeakMap of output connections keyed against instances of AudioObject. Use it to get the current connection state of any AudioObject:
+
+    var connections = AudioObject.connections.get(object);
+
+#### .features
 
 A key-value store of results from feature tests in the browser. Currently there is
 one feature test, <code>disconnectParameters</code>:
