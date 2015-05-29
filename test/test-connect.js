@@ -71,6 +71,7 @@ module('AudioObject', function(fixture) {
 
 	asyncTest('Testing .connect(node)', 1, function() {
 		object0.connect(n1);
+
 		setTimeout(function() {
 			ok(isReceivingSignal(), 'Not receiving any signal! Buffer sum: ' + (Array.prototype.reduce.call(buffer, sum, 0)));
 			start();
