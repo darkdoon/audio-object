@@ -20,7 +20,7 @@ audio object:
 
     compressor.connect(gain);
 
-    var audioObject = AudioObject(audio, compressor, gain, {
+    var audioObject = new AudioObject(audio, compressor, gain, {
         threshold: compressor.threshold,
         ratio: compressor.ratio,
         level: gain.gain
