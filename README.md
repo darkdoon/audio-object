@@ -81,16 +81,15 @@ handles connections to AudioObjects as well as AudioNodes:
     var delayNode = audioContext.createDelay();
     audioObject.connect(delayNode);
 
-<code>.connect(destination)</code> Connects the <code>"default"</code> output
-to <code>destination</code>'s <code>"default"</code> input if it's an
-AudioObject (or directly to <code>destination</code> if it is an AudioNode).
+<code>.connect(destination)</code><br/>
+Connects the <code>default</code> output to <code>destination</code>'s <code>default</code> input.
 
-<code>.connect(outputName, destination)</code> Connects the output named
-<code>outputName</code> to <code>destination</code>'s <code>"default"</code>
-input if it's an AudioObject (or directly to destination if it is an AudioNode).
+<code>.connect(outputName, destination)</code><br/>
+Connects the output named <code>outputName</code> to <code>destination</code>'s
+<code>default</code> input.
 
-<code>.connect(outputName, destination, inputName)</code> Connects the output
-named <code>outputName</code> to <code>destination</code>'s
+<code>.connect(outputName, destination, inputName)</code><br/>
+Connects the output named <code>outputName</code> to <code>destination</code>'s
 <code>inputName</code> input.
 
 Input and output names were defined when the AudioObject was first constructed.
@@ -102,19 +101,17 @@ outputNode.
 
     audioObject.disconnect(delay);
 
-<code>.disconnect(destination)</code> Disconnects the <code>"default"</code>
-output from <code>destination</code>'s <code>"default"</code>
-input if it's an AudioObject (or from <code>destination</code> if it's an
-AudioNode).
+<code>.disconnect(destination)</code><br/>
+Disconnects the <code>"default"</code> output from <code>destination</code>'s
+<code>default</code> input.
 
-<code>.disconnect(outputName, destination)</code> Disconnects output
-<code>outputName</code> from <code>destination</code>'s
-<code>"default"</code> input if it's an AudioObject (or from
-<code>destination</code> if it's an AudioNode).
+<code>.disconnect(outputName, destination)</code><br/>
+Disconnects output <code>outputName</code> from <code>destination</code>'s
+<code>default</code> input.
 
-<code>.disconnect(outputName, destination, inputName)</code> Disconnects output
-<code>outputName</code> from <code>destination</code>'s <code>inputName</code>
-input.
+<code>.disconnect(outputName, destination, inputName)</code><br/>
+Disconnects output <code>outputName</code> from <code>destination</code>'s
+<code>inputName</code> input.
 
 Input and output names were defined when the AudioObject was first constructed.
 
