@@ -200,15 +200,8 @@
 	var outputs = new WeakMap();
 	var connectionMap = new WeakMap();
 
-	function getConnections(source) {
-		var connections = AudioObject.connections.get(source);
-
-		if (!connections) {
-			connections = {};
-			AudioObject.set(source, connections);
-		}
-
-		return connections;
+	function getConnections(object) {
+		return connectionsMap.get(object);
 	}
 
 	function setConnection(source, outName, outNumber, inNode, inNumber) {
@@ -395,7 +388,7 @@
 				extend({}, output)
 			);
 
-			AudioObject.connections.set(this, {});
+			connectionsMap.set(this, {});
 		}
 		else {
 			this.connect = this.disconnect = noop;
@@ -532,7 +525,7 @@
 	AudioObject.inputs = inputs;
 	AudioObject.outputs = outputs;
 	AudioObject.features = features;
-	AudioObject.connections = connectionMap;
+	AudioObject.connections = getConnections;
 	AudioObject.automate = rampToValue;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
