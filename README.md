@@ -154,7 +154,16 @@ defined, <code>curve</code> is set to <code>'step'</code>.
 - <code>'linear'</code> uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 - <code>'exponential'</code> uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
 
-returns <code>undefined</code>;
+returns <code>undefined</code>.
+
+
+#### .connections(object)
+
+Get the current connection state of any AudioObject:
+
+    var connections = AudioObject.connections(object);
+
+returns <code>connections</code> object.
 
 #### .defineAudioProperties(object, audioContext, audioParams)
 
@@ -223,12 +232,6 @@ in it's prototype chain.
 
 
 ### AudioObject properties
-
-#### .connections
-
-A WeakMap of output connections keyed against instances of AudioObject. Use it to get the current connection state of any AudioObject:
-
-    var connections = AudioObject.connections.get(object);
 
 #### .features
 

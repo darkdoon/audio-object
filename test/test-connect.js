@@ -108,7 +108,7 @@ module('AudioObject', function(fixture) {
 		object0.connect(n1);
 		object0.connect(n2);
 
-		var map = AudioObject.connections.get(object0).default;
+		var map = AudioObject.connections(object0).default;
 
 		ok(map.get(n1), 'n1 should be in the connections map.');
 		ok(map.get(n2), 'n2 should be in the connections map.');
@@ -154,7 +154,7 @@ module('AudioObject', function(fixture) {
 		object0.connect(object1);
 		object0.connect(n2);
 
-		var map = AudioObject.connections.get(object0).default;
+		var map = AudioObject.connections(object0).default;
 
 		var o1 = map.get(object1);
 		ok(o1 === undefined, 'o1 should not be in the connections map.');

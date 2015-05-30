@@ -198,7 +198,7 @@
 
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
-	var connectionMap = new WeakMap();
+	var connectionsMap = new WeakMap();
 
 	function getConnections(object) {
 		return connectionsMap.get(object);
