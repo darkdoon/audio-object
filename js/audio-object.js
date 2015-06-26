@@ -3,6 +3,8 @@
 
 	if (!window.AudioContext) { return; }
 
+	var assign = Object.assign;
+
 	// defineAudioProperty()
 	// defineAudioProperties()
 
@@ -30,14 +32,6 @@
 
 	function isDefined(value) {
 		return value !== undefined && value !== null;
-	}
-
-	function extend(object1, object2) {
-		Object.keys(object2).forEach(function(key) {
-			object1[key] = object2[key];
-		});
-
-		return object1;
 	}
 
 	function overloadByType(signatures, returnFlag) {
@@ -200,6 +194,16 @@
 	var outputs = new WeakMap();
 	var connectionsMap = new WeakMap();
 
+	function getInput(object, name) {
+		var map = inputs.get(object);
+		return map && map[isDefined(name) ? name : 'default'];
+	}
+
+	function getOutput(object, name) {
+		var map = outputs.get(object);
+		return map && map[isDefined(name) ? name : 'default'];
+	}
+
 	function getConnections(object) {
 		return connectionsMap.get(object);
 	}
@@ -213,7 +217,7 @@
 		tempMap[outNumber || 0] = inNumber || 0;
 
 		if (numberMap) {
-			extend(numberMap, tempMap);
+			assign(numberMap, tempMap);
 		}
 		else {
 			outMap.set(inNode, tempMap);
@@ -273,21 +277,8 @@
 		}
 	}
 
-	function getNode(store, object, name) {
-		var nodes = store.get(object);
-		if (!nodes) { return; }
-
-		var node = nodes[name];
-		return node;
-	}
-
 	function getInNode(object, name) {
-		return isAudioNode(object) ? object : getNode(AudioObject.inputs, object, name) ;
-	}
-
-	function getOutNode(object, name) {
-		// Out object is always an AudioObject
-		return getNode(AudioObject.outputs, object, name) ;
+		return isAudioNode(object) ? object : getInput(object, name) ;
 	}
 
 	function connect(source, outName, outNumber, destination, inName, inNumber) {
@@ -299,7 +290,7 @@
 			return;
 		}
 
-		var outNode = getOutNode(source, outName);
+		var outNode = getOutput(source, outName);
 
 		if (!outNode) {
 			console.warn('AudioObject: trying to .connect() from an object without output "' + outName + '". Dropping connection.', source);
@@ -329,7 +320,7 @@
 	}
 
 	function disconnect(source, outName, outNumber, destination, inName, inNumber) {
-		var outNode = getOutNode(source, outName);
+		var outNode = getOutput(source, outName);
 
 		if (!outNode) {
 			console.warn('AudioObject: trying to .disconnect() from an object without output "' + outName + '". Dropping connection.', source);
@@ -375,17 +366,17 @@
 
 		// Keep a map of inputs in AudioObject.inputs
 		if (input) {
-			AudioObject.inputs.set(this, isAudioNode(input) ?
+			inputs.set(this, isAudioNode(input) ?
 				{ default: input } :
-				extend({}, input)
+				assign({}, input)
 			);
 		}
 
 		// Keep a map of outputs in AudioObject.outputs
 		if (output) {
-			AudioObject.outputs.set(this, isAudioNode(output) ?
+			outputs.set(this, isAudioNode(output) ?
 				{ default: output } :
-				extend({}, output)
+				assign({}, output)
 			);
 
 			connectionsMap.set(this, {});
@@ -517,16 +508,16 @@
 	};
 
 	// Extend AudioObject.prototype
-	extend(AudioObject.prototype, prototype);
+	assign(AudioObject.prototype, prototype);
 
 	// Feature tests
 	features.disconnectParameters = testDisconnectParameters();
 
-	AudioObject.inputs = inputs;
-	AudioObject.outputs = outputs;
-	AudioObject.features = features;
+	AudioObject.inputs = getInput;
+	AudioObject.outputs = getOutput;
 	AudioObject.connections = getConnections;
 	AudioObject.automate = rampToValue;
+	AudioObject.features = features;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
