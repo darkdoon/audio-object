@@ -24,6 +24,8 @@
 
 	var map = Function.prototype.call.bind(Array.prototype.map);
 
+	var minExponentialValue = 1.4013e-45;
+
 	function noop() {}
 
 	function toType(object) {
@@ -83,7 +85,21 @@
 
 	function exponentialRamp(param, n, time, duration) {
 		param.setValueAtTime(param.value, time);
-		param.exponentialRampToValueAtTime(n, time + duration);
+
+		if (n < 0) {
+			throw new Error('AudioObject: Cannot automate negative values via an exponential curve.');
+		}
+
+		if (n < minExponentialValue) {
+			// minExponentialValue is orders of magnitude lower than a single
+			// quantization step, so for all practical purposes we can safely
+			// set it to 0 immediately at the end of the exponential ramp.
+			param.exponentialRampToValueAtTime(minExponentialValue, time + duration);
+			param.setValueAtTime(n, time + duration);
+		}
+		else {
+			param.exponentialRampToValueAtTime(n, time + duration);
+		}
 	}
 
 	function rampToValue(param, value, time, duration, curve) {
