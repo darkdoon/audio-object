@@ -10,7 +10,7 @@
 	    	value: 1
 	    };
 
-	var extend = Sparky.extend;
+	var extend = Object.assign;
 
 	var prototype = {
 	    	cancelScheduledValues: function cancelScheduledValues() {},
