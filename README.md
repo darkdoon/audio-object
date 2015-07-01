@@ -120,13 +120,17 @@ Input and output names were defined when the AudioObject was first constructed.
 Automate a property. The property <code>name</code> will ramp to <code>value</code>
 from it's current value over <code>duration</code> (in seconds). The optional
 parameter <code>curve</code> can be either <code>'linear'</code> (the default) or
-<code>'exponential'</code>. Exponential curves can only be used on positive
-non-zero values.
+<code>'exponential'</code>.
 
     audioObject.automate('level', 0, 1.2)
 
 Properties of the audioObject are updated at the browser's frame rate during an
 automation.
+
+Note that while the Web Audio API only accepts positive non-zero values for
+exponential curves, an audioObject will accept a zero value. It exponentially
+automates to as near zero as possible and sets <code>0</code> at the end of the
+ramp. Negative values are still a no-no.
 
 #### .destroy()
 
