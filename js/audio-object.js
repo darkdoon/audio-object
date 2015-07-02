@@ -353,6 +353,7 @@
 
 		if (!inNode) {
 			console.warn('AudioObject: trying to .disconnect() an object with no inputs.', destination);
+			return;
 		}
 
 		if (features.disconnectParameters) {
