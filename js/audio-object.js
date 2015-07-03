@@ -116,7 +116,7 @@
 		if (param ? !isAudioParam(param) : (!data.set || !data.get)) {
 			throw new Error(
 				'AudioObject.defineAudioProperty requires EITHER data.param to be an AudioParam' + 
-				'OR data.set and data.get to be defined as functions.'
+				'OR both data.set and data.get to be defined as functions.'
 			);
 		}
 
