@@ -48,8 +48,12 @@
 		};
 	}
 
+	function isAudioContext(object) {
+		return window.AudioContext && window.AudioContext.prototype.isPrototypeOf(object);
+	}
+
 	function isAudioNode(object) {
-		return window.AudioNode.prototype.isPrototypeOf(object);
+		return window.AudioNode && window.AudioNode.prototype.isPrototypeOf(object);
 	}
 
 	function isAudioParam(object) {
