@@ -1,4 +1,13 @@
 (function(window) {
+	if (!window.console || !window.console.log) { return; }
+
+	console.log('AudioObject');
+	console.log('http://github.com/soundio/audio-object');
+	console.log('A wrapper for Web Audio sub-graphs');
+	console.log('——————————————————————————————————————');
+})(this);
+
+(function(window) {
 	"use strict";
 
 	if (!window.AudioContext) { return; }
