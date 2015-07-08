@@ -552,5 +552,10 @@
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
 
+	Object.defineProperty(AudioObject, 'minExponentialValue', {
+		value: minExponentialValue,
+		enumerable: true
+	});
+
 	window.AudioObject = AudioObject;
 })(window);
