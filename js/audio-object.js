@@ -73,8 +73,8 @@
 		var audio = new AudioContext();
 
 		try {
-			// This will error if disconnect(parameters) is
-			// supported.
+			// This will error if disconnect(parameters) is supported
+			// because it is not connected to audio destination.
 			audio.createGain().disconnect(audio.destination);
 			return false;
 		} catch (error) { 
@@ -83,7 +83,13 @@
 	}
 
 	function registerAutomator(object, name, fn) {
-		var automators = automatorMap.get(object) || (automatorMap.set(object, {}));
+		var automators = automatorMap.get(object);
+
+		if (!automators) {
+			automators = {};
+			automatorMap.set(object, automators);
+		}
+
 		automators[name] = fn;
 	}
 
@@ -118,7 +124,7 @@
 	function rampToValue(param, value, time, duration, curve) {
 		// Curve defaults to 'step' where a duration is 0 or not defined, and
 		// otherwise to 'linear'.
-		curve = duration === 0 || duration === undefined ? 'step' : curve || 'linear' ;
+		curve = duration ? curve || 'linear' : 'step' ;
 		param.cancelScheduledValues(time);
 		ramps[curve](param, value, time, duration);
 	}
@@ -140,7 +146,9 @@
 		    	data.set.bind(object) ;
 
 		var get = param ?
-		    	function get() { return param.value; } :
+		    	function get() {
+		    		return param.value;
+		    	} :
 		    	data.get.bind(object) ;
 
 		var value = get();
@@ -188,13 +196,13 @@
 
 		Object.defineProperty(object, name, {
 			// Return value because we want values that have just been set
-			// to be immediately reflected by get, to be coherent.
+			// to be immediately reflected by get, even if they are being
+			// quickly automated.
 			get: function() { return value; },
 
 			set: function(val) {
-				// Create a new notify message and update the value.
-				update(val);
 				automate(val);
+				update(val);
 			},
 
 			enumerable: isDefined(data.enumerable) ? data.enumerable : true,
@@ -430,7 +438,7 @@
 			if (!automators) {
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				throw new Error('AudioObject: property "' + name + '" is not automatable.');
 				return;
 			}
 
@@ -439,7 +447,7 @@
 			if (!fn) {
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				throw new Error('AudioObject: property "' + name + '" is not automatable.');
 				return;
 			}
 
