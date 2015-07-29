@@ -158,6 +158,8 @@
 		    	name: name
 		    };
 
+		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
+
 		function update(val) {
 			// Set the old value of the message to the current value before
 			// updating the value.
@@ -187,8 +189,13 @@
 			window.requestAnimationFrame(frame);
 		}
 
-		function automate(value, duration, curve) {
-			set(value, audio.currentTime, duration || data.duration || defaults.duration, curve || data.curve);
+		function automate(value, time, duration, curve) {
+			set(value,
+				isDefined(time) ? time : audio.currentTime,
+				isDefined(duration) ? duration : defaultDuration,
+				curve || data.curve
+			);
+
 			window.requestAnimationFrame(frame);
 		}
 
@@ -432,7 +439,7 @@
 	}
 
 	var prototype = {
-		automate: function(name, value, time, curve) {
+		automate: function(name, value, time, duration, curve) {
 			var automators = automatorMap.get(this);
 
 			if (!automators) {
@@ -451,7 +458,7 @@
 				return;
 			}
 
-			fn(value, time, curve);
+			fn(value, time, duration, curve);
 			return this;
 		},
 
