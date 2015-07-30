@@ -124,9 +124,9 @@
 	}
 
 	function automateToValue(param, value1, value2, time1, time2, curve) {
-		// Curve defaults to 'step' where a duration is 0 or not defined, and
-		// otherwise to 'linear'.
-		curve = duration ? curve || 'linear' : 'step' ;
+		// Curve defaults to 'step' where a duration is 0, and otherwise to
+		// 'linear'.
+		curve = time2 === time1 ? 'step' : curve || 'linear' ;
 		param.cancelScheduledValues(time1);
 		ramps[curve](param, value1, value2, time1, time2);
 	}
