@@ -194,6 +194,8 @@
 			set: function(val) {
 				// Create a new notify message and update the value.
 				update(val);
+
+				// If automate is not set to noop this will launch an automation.
 				automate(val);
 			},
 
