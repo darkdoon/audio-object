@@ -199,23 +199,19 @@ As with <code>.defineProperties()</code>, <code>enumerable</code> and
 by default. <code>curve</code> can also be set, which, if <code>object</code> is
 an AudioObject, sets the default curve to be used by <code>.automate()</code>.
 
-To control more than one audio param with a single property, define a
-getter/setter pair. Note that both are required. It is the setter's
-responsibility to automate the audio param values with the given time,
-duration and curve. <code>AudioObject.automate()</code> Can help with
-that.
+To control more than one audio param with a single property, define a setter. It
+is the setter's responsibility to automate the audio param values with the given
+value, time, duration and curve. <code>AudioObject.automate()</code> Can help
+with that.
 
     AudioObject.defineAudioProperties(object, audioContext, {
         response: {
-            get: function() {
-                return compressor.attack.value;
-            },
-
             set: function(value, time, duration, curve) {
                 AudioObject.automate(compressor.attack, value, time, duration, curve);
                 AudioObject.automate(compressor.release, value * 6, time, duration, curve);
             },
 
+            defaultValue: 1,
             curve: 'linear'
         }
     });
