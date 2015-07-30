@@ -618,11 +618,13 @@
 
 	AudioObject.inputs = function() {
 		console.warn('AudioObject.inputs() deprecated in favour of AudioObject.getInput()');
+		console.trace();
 		return getInput.apply(this, arguments);
 	};
 
 	AudioObject.outputs = function() {
 		console.warn('AudioObject.outputs() deprecated in favour of AudioObject.getOutput()');
+		console.trace();
 		return getOutput.apply(this, arguments);
 	};
 
