@@ -191,17 +191,14 @@
 			);
 		}
 
-		var value = param ? param.value : data.defaultValue || 0 ;
-
+		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
+		var defaultCurve = data.curve || defaults.curve ;
+		var value = param ? param.value : data.value || 0 ;
 		var cues = [[value, value, 0, 0, "step"]];
-
 		var message = {
 		    	type: 'update',
 		    	name: name
 		    };
-
-		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
-		var defaultCurve = data.curve || defaults.curve ;
 
 		function set(value, time, duration, curve) {
 			var value1 = getValue(cues, time);
@@ -217,7 +214,7 @@
 			else {
 				data.set.apply(object, arguments);
 			}
-			
+
 			cues.push([value1, value2, time1, time2, curve]);
 		}
 
