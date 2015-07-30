@@ -14,26 +14,19 @@
 
 	var assign = Object.assign;
 
-	// defineAudioProperty()
-	// defineAudioProperties()
-
 	var automatorMap = new WeakMap();
 
 	var defaults = {
-	    	duration: 0.008
+	    	duration: 0.008,
+	    	curve: 'linear'
 	    };
 
 	var features = {};
 
-	var ramps = {
-	    	'step': stepRamp,
-	    	'linear': linearRamp,
-	    	'exponential': exponentialRamp
-	    };
-
 	var map = Function.prototype.call.bind(Array.prototype.map);
 
 	var minExponentialValue = 1.4013e-45;
+
 
 	function noop() {}
 
@@ -73,8 +66,8 @@
 		var audio = new AudioContext();
 
 		try {
-			// This will error if disconnect(parameters) is
-			// supported.
+			// This will error if disconnect(parameters) is supported
+			// because it is not connected to audio destination.
 			audio.createGain().disconnect(audio.destination);
 			return false;
 		} catch (error) { 
@@ -83,78 +76,156 @@
 	}
 
 	function registerAutomator(object, name, fn) {
-		var automators = automatorMap.get(object) || (automatorMap.set(object, {}));
+		var automators = automatorMap.get(object);
+
+		if (!automators) {
+			automators = {};
+			automatorMap.set(object, automators);
+		}
+
 		automators[name] = fn;
 	}
 
-	function stepRamp(param, n, time, duration) {
-		param.setValueAtTime(n, time);
+
+	// AudioParam automation
+
+	var ramps = {
+	    	'step': stepRamp,
+	    	'linear': linearRamp,
+	    	'exponential': exponentialRamp
+	    };
+
+	function stepRamp(param, value1, value2, time1) {
+		param.setValueAtTime(value2, time1);
 	}
 
-	function linearRamp(param, n, time, duration) {
-		param.setValueAtTime(param.value, time);
-		param.linearRampToValueAtTime(n, time + duration);
+	function linearRamp(param, value1, value2, time1, time2) {
+		param.setValueAtTime(value1, time1);
+		param.linearRampToValueAtTime(value2, time2);
 	}
 
-	function exponentialRamp(param, n, time, duration) {
-		param.setValueAtTime(param.value, time);
+	function exponentialRamp(param, value1, value2, time1, time2) {
+		param.setValueAtTime(value1, time1);
 
-		if (n < 0) {
+		if (value2 < 0) {
 			throw new Error('AudioObject: Cannot automate negative values via an exponential curve.');
 		}
 
-		if (n < minExponentialValue) {
+		if (value2 < minExponentialValue) {
 			// minExponentialValue is orders of magnitude lower than a single
 			// quantization step, so for all practical purposes we can safely
 			// set it to 0 immediately at the end of the exponential ramp.
-			param.exponentialRampToValueAtTime(minExponentialValue, time + duration);
-			param.setValueAtTime(n, time + duration);
+			param.exponentialRampToValueAtTime(minExponentialValue, time2);
+			param.setValueAtTime(value2, time2);
 		}
 		else {
-			param.exponentialRampToValueAtTime(n, time + duration);
+			param.exponentialRampToValueAtTime(value2, time2);
 		}
 	}
 
-	function rampToValue(param, value, time, duration, curve) {
+	function automateToValue(param, value1, value2, time1, time2, curve) {
 		// Curve defaults to 'step' where a duration is 0 or not defined, and
 		// otherwise to 'linear'.
-		curve = duration === 0 || duration === undefined ? 'step' : curve || 'linear' ;
-		param.cancelScheduledValues(time);
-		ramps[curve](param, value, time, duration);
+		curve = duration ? curve || 'linear' : 'step' ;
+		param.cancelScheduledValues(time1);
+		ramps[curve](param, value1, value2, time1, time2);
 	}
+
+
+	// Maths
+
+	var getters = {
+	    	'step': stepGet,
+	    	'linear': linearGet,
+	    	'exponential': exponentialGet
+	    };
+
+	function stepGet(value1, value2, time1, time2, time) {
+		return time >= time1 ? value2 : value1 ;
+	}
+
+	function linearGet(value1, value2, time1, time2, time) {
+		return value1 + (value2 - value1) * (time - time1) / (time2 - time1) ;
+	}
+
+	function exponentialGet(value1, value2, time1, time2, time) {
+		return value1 * Math.pow(value2 / value1, (time - time1) / (time2 - time1)) ;
+	}
+
+	function getValue(cues, time) {
+		var n = -1;
+		var l = cues.length;
+		var cue;
+
+		if (l === 0) { return 0; }
+
+		// Find latest cue
+		while (cues[++n] && cues[n][2] < time) {
+			cue = cues[n];
+		}
+
+		// Remove cues that are in the past
+		if (--n > 0) { cues.splice(0, n); }
+
+		var value1 = cue[0];
+		var value2 = cue[1];
+		var time1  = cue[2];
+		var time2  = cue[3];
+		var curve  = cue[4];
+
+		return time > time2 ?
+			value2 :
+			getters[curve](value1, value2, time1, time2, time) ;
+	}
+
+
+	// AudioProperty
 
 	function defineAudioProperty(object, name, audio, data) {
 		var param = isAudioParam(data) ? data : data.param ;
 
-		if (param ? !isAudioParam(param) : (!data.set || !data.get)) {
+		if (param ? !isAudioParam(param) : !data.set) {
 			throw new Error(
 				'AudioObject.defineAudioProperty requires EITHER data.param to be an AudioParam' + 
-				'OR both data.set and data.get to be defined as functions.'
+				'OR data.set to be defined as a function.'
 			);
 		}
 
-		var set = param ?
-		    	function set(value, time, duration, curve) {
-		    		rampToValue(param, value, time, duration, curve);
-		    	} :
-		    	data.set.bind(object) ;
+		var value = param ? param.value : data.defaultValue || 0 ;
 
-		var get = param ?
-		    	function get() { return param.value; } :
-		    	data.get.bind(object) ;
-
-		var value = get();
+		var cues = [[value, value, 0, 0, "step"]];
 
 		var message = {
 		    	type: 'update',
 		    	name: name
 		    };
 
-		function update(val) {
+		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
+		var defaultCurve = data.curve || defaults.curve ;
+
+		function set(value, time, duration, curve) {
+			var value1 = getValue(cues, time);
+			var value2 = value;
+			var time1  = time;
+			var time2  = time + duration;
+
+			curve = duration ? curve || defaultCurve : 'step' ;
+
+			if (param) {
+				automateToValue(param, value1, value2, time1, time2, curve);
+			}
+			else {
+				data.set.apply(object, arguments);
+			}
+			
+			cues.push([value1, value2, time1, time2, curve]);
+		}
+
+		function update(v) {
 			// Set the old value of the message to the current value before
 			// updating the value.
 			message.oldValue = value;
-			value = val;
+			value = v;
 
 			// Update the observe message and send it.
 			if (Object.getNotifier) {
@@ -163,24 +234,29 @@
 		}
 
 		function frame() {
+			var currentValue = getValue(cues, audio.currentTime);
+
 			// Stop updating if value has reached param value
-			if (value === get()) { return; }
+			if (value === currentValue) { return; }
 
 			// Castrate the calls to automate the value, then call the setter
 			// with the param's current value. Done like this, where the setter
 			// has been redefined externally it nonetheless gets called with
 			// automated values.
 			var _automate = automate;
-
 			automate = noop;
-			object[name] = get();
-			automate = _automate;
 
+			// Set the property. This is what causes observers to be called.
+			object[name] = currentValue;
+			automate = _automate;
 			window.requestAnimationFrame(frame);
 		}
 
-		function automate(value, duration, curve) {
-			set(value, audio.currentTime, duration || data.duration || defaults.duration, curve || data.curve);
+		function automate(value, time, duration, curve) {
+			time     = isDefined(time) ? time : audio.currentTime;
+			duration = isDefined(duration) ? duration : defaultDuration;
+
+			set(value, time, duration, curve || data.curve);
 			window.requestAnimationFrame(frame);
 		}
 
@@ -188,15 +264,16 @@
 
 		Object.defineProperty(object, name, {
 			// Return value because we want values that have just been set
-			// to be immediately reflected by get, to be coherent.
+			// to be immediately reflected by get, even if they are being
+			// quickly automated.
 			get: function() { return value; },
 
 			set: function(val) {
-				// Create a new notify message and update the value.
-				update(val);
-
 				// If automate is not set to noop this will launch an automation.
 				automate(val);
+
+				// Create a new notify message and update the value.
+				update(val);
 			},
 
 			enumerable: isDefined(data.enumerable) ? data.enumerable : true,
@@ -207,7 +284,6 @@
 	}
 
 	function defineAudioProperties(object, audio, data) {
-		// Define params as getters/setters
 		var name;
 
 		for (name in data) {
@@ -218,8 +294,7 @@
 	}
 
 
-
-	// AudioObject()
+	// AudioObject
 
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
@@ -426,13 +501,13 @@
 	}
 
 	var prototype = {
-		automate: function(name, value, time, curve) {
+		automate: function(name, value, time, duration, curve) {
 			var automators = automatorMap.get(this);
 
 			if (!automators) {
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				throw new Error('AudioObject: property "' + name + '" is not automatable.');
 				return;
 			}
 
@@ -441,11 +516,11 @@
 			if (!fn) {
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
-				throw new Error('AudioObject: property ' + name + ' is not automatable.');
+				throw new Error('AudioObject: property "' + name + '" is not automatable.');
 				return;
 			}
 
-			fn(value, time, curve);
+			fn(value, time, duration, curve);
 			return this;
 		},
 
@@ -545,10 +620,29 @@
 	// Feature tests
 	features.disconnectParameters = testDisconnectParameters();
 
-	AudioObject.inputs = getInput;
-	AudioObject.outputs = getOutput;
+	AudioObject.inputs = function() {
+		console.warn('AudioObject.inputs() deprecated in favour of AudioObject.getInput()');
+		console.trace();
+		return getInput.apply(this, arguments);
+	};
+
+	AudioObject.outputs = function() {
+		console.warn('AudioObject.outputs() deprecated in favour of AudioObject.getOutput()');
+		console.trace();
+		return getOutput.apply(this, arguments);
+	};
+
+	AudioObject.automate = function(param, value, time, duration, curve) {
+		var value1 = param.value;
+		var value2 = value;
+		var time1  = time;
+		var time2  = time + duration;
+		return automateToValue(param, value1, value2, time1, time2, curve);
+	}
+
+	AudioObject.getInput = getInput;
+	AudioObject.getOutput = getOutput;
 	AudioObject.connections = getConnections;
-	AudioObject.automate = rampToValue;
 	AudioObject.features = features;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
