@@ -54,9 +54,6 @@ are named in a definition object:
         sidechain: sideGain
     }, outGain);
 
-An input or output definition object must have a <code>default</code> property.
-Default inputs and outputs are used by <code>.connect()</code> and
-<code>.disconnect()</code> by default.
 
 #### Exposing audio params as properties
 
@@ -67,13 +64,12 @@ To read more about what can be passed into <code>AudioObject()</code> as
 
 ### Instance methods
 
-An instance of AudioObject has the methods <code>.connect()</code>,
-<code>.disconnect()</code>, <code>.automate()</code> and
+An instance of AudioObject has the methods <code>.automate()</code> and
 <code>.destroy()</code>.
 
     var audioObject = AudioObject(audio, input, output, params);
 
-#### .connect()
+<!--#### .connect()
 
 A bit like a Web Audio node's <code>.connect()</code> method, although it
 handles connections to AudioObjects as well as AudioNodes:
@@ -113,7 +109,7 @@ Disconnects output <code>outputName</code> from <code>destination</code>'s
 Disconnects output <code>outputName</code> from <code>destination</code>'s
 <code>inputName</code> input.
 
-Input and output names were defined when the AudioObject was first constructed.
+Input and output names were defined when the AudioObject was first constructed. -->
 
 #### .automate(name, value, duration, [curve])
 
@@ -161,13 +157,13 @@ defined, <code>curve</code> is set to <code>'step'</code>.
 returns <code>undefined</code>.
 
 
-#### .connections(object)
+<!-- #### .connections(object)
 
 Get the current connection state of any AudioObject:
 
     var connections = AudioObject.connections(object);
 
-returns <code>connections</code> object.
+returns <code>connections</code> object. -->
 
 #### .defineAudioProperties(object, audioContext, audioParams)
 
