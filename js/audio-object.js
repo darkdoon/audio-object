@@ -336,12 +336,12 @@
 		trigger: function(time, type) {
 			var args = arguments;
 
-			if (type === 'automate') {
+			if (type === 'control') {
 				return this.automate(args[2], args[3], time, args[4], args[5]);
 			}
 
 			if (type === 'pitch') {
-				return this.automate('pitch', args[2], time, 'exponential', 0.008);
+				return this.automate('pitch', args[2], time);
 			}
 
 			if (type === 'noteon') {
