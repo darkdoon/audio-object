@@ -340,6 +340,10 @@
 				return this.automate(args[2], args[3], time, args[4], args[5]);
 			}
 
+			if (type === 'pitch') {
+				return this.automate('pitch', args[2], time, 'exponential', 0.008);
+			}
+
 			if (type === 'noteon') {
 				return this.start && this.start(time, args[2], args[3]);
 			}
