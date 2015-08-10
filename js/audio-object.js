@@ -329,11 +329,27 @@
 			AudioObject.defineAudioProperties(this, audio, params);
 		}
 
-		Object.defineProperty(this, 'context', { value: audio });
+		Object.defineProperty(this, 'audio', { value: audio });
 	}
 
 	var prototype = {
-		automate: function(name, value, time, duration, curve) {
+		trigger: function(time, type) {
+			var args = arguments;
+
+			if (type === 'automate') {
+				return this.automate(args[2], args[3], time, args[4], args[5]);
+			}
+
+			if (type === 'noteon') {
+				return this.start && this.start(time, args[2], args[3]);
+			}
+
+			if (type === 'noteoff') {
+				return this.stop && this.stop(time, args[2]);
+			}
+		},
+
+		automate: function(name, value, time, curve, duration) {
 			var automators = automatorMap.get(this);
 
 			if (!automators) {
