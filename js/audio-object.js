@@ -144,12 +144,12 @@
 		if (l === 0) { return 0; }
 
 		// Find latest cue
-		while (cues[++n] && cues[n][2] < time) {
+		while (cues[++n] && cues[n][2] <= time) {
 			cue = cues[n];
 		}
 
 		// Remove cues that are in the past
-		if (--n > 0) { cues.splice(0, n); }
+		if (--n > 1) { cues.splice(0, n - 1); }
 
 		var value1 = cue[0];
 		var value2 = cue[1];
@@ -250,7 +250,8 @@
 			get: function() { return value; },
 
 			set: function(val) {
-				// If automate is not set to noop this will launch an automation.
+				// If automate is not set to noop this will launch an
+				// automation.
 				automate(val);
 
 				// Create a new notify message and update the value.
