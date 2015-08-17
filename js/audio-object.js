@@ -281,6 +281,28 @@
 	var inputs = new WeakMap();
 	var outputs = new WeakMap();
 
+	function defineInputs(object, properties) {
+		var map = inputs.get(object);
+
+		if (!map) {
+			map = {};
+			inputs.set(object, map);
+		}
+
+		assign(map, properties);
+	}
+
+	function defineOutputs(object, properties) {
+		var map = outputs.get(object);
+
+		if (!map) {
+			map = {};
+			outputs.set(object, map);
+		}
+
+		assign(map, properties);
+	}
+
 	function getInput(object, name) {
 		var map = inputs.get(object);
 		return map && map[isDefined(name) ? name : 'default'];
@@ -320,9 +342,6 @@
 				{ default: output } :
 				assign({}, output)
 			);
-		}
-		else {
-			this.connect = this.disconnect = noop;
 		}
 
 		// Define Audio Params as getters/setters
@@ -409,6 +428,8 @@
 	AudioObject.getInput = getInput;
 	AudioObject.getOutput = getOutput;
 	AudioObject.features = features;
+	AudioObject.defineInputs = defineInputs;
+	AudioObject.defineOutputs = defineOutputs;
 	AudioObject.defineAudioProperty = defineAudioProperty;
 	AudioObject.defineAudioProperties = defineAudioProperties;
 	AudioObject.isAudioObject = isAudioObject;
