@@ -110,7 +110,9 @@
 	function automateToValue(param, value1, value2, time1, time2, curve) {
 		// Curve defaults to 'step' where a duration is 0, and otherwise to
 		// 'linear'.
-		curve = time2 === time1 ? 'step' : curve || 'linear' ;
+		curve = !time2 ? 'step' :
+			time2 === time1 ? 'step' :
+			curve ? curve : 'linear' ;
 		param.cancelScheduledValues(time1);
 		ramps[curve](param, value1, value2, time1, time2);
 	}
@@ -404,18 +406,6 @@
 
 	// Feature tests
 	features.disconnectParameters = testDisconnectParameters();
-
-	AudioObject.inputs = function() {
-		console.warn('AudioObject.inputs() deprecated in favour of AudioObject.getInput()');
-		console.trace();
-		return getInput.apply(this, arguments);
-	};
-
-	AudioObject.outputs = function() {
-		console.warn('AudioObject.outputs() deprecated in favour of AudioObject.getOutput()');
-		console.trace();
-		return getOutput.apply(this, arguments);
-	};
 
 	AudioObject.automate = function(param, value, time, duration, curve) {
 		var value1 = param.value;
