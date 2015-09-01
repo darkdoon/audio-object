@@ -76,7 +76,8 @@
 	var ramps = {
 	    	'step': stepRamp,
 	    	'linear': linearRamp,
-	    	'exponential': exponentialRamp
+	    	'exponential': exponentialRamp,
+	    	'decay': targetRamp
 	    };
 
 	function stepRamp(param, value1, value2, time1) {
@@ -107,6 +108,11 @@
 		}
 	}
 
+	function targetRamp(param, value1, value2, time1, time2) {
+		param.setValueAtTime(value1, time1);
+		param.setTargetAtTime(value2, time1, time2 - time1);
+	}
+
 	function automateToValue(param, value1, value2, time1, time2, curve) {
 		// Curve defaults to 'step' where a duration is 0, and otherwise to
 		// 'linear'.
@@ -123,8 +129,12 @@
 	var getters = {
 	    	'step': stepGet,
 	    	'linear': linearGet,
-	    	'exponential': exponentialGet
+	    	'exponential': exponentialGet,
+	    	'decay': decayGet
 	    };
+
+	// Reimplement the automation curves found at
+	// http://webaudio.github.io/web-audio-api/#h4_methods-3
 
 	function stepGet(value1, value2, time1, time2, time) {
 		return time >= time1 ? value2 : value1 ;
@@ -136,6 +146,10 @@
 
 	function exponentialGet(value1, value2, time1, time2, time) {
 		return value1 * Math.pow(value2 / value1, (time - time1) / (time2 - time1)) ;
+	}
+
+	function decayGet(value1, value2, time1, time2, time) {
+		return value2 + (value1 - value2) * Math.pow(Math.E, -(time - time1) / (time2 - time1)) ;
 	}
 
 	function getValue(cues, time) {
