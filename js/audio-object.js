@@ -137,7 +137,7 @@
 	// http://webaudio.github.io/web-audio-api/#h4_methods-3
 
 	function stepGet(value1, value2, time1, time2, time) {
-		return time >= time1 ? value2 : value1 ;
+		return time < time1 ? value1 : value2 ;
 	}
 
 	function linearGet(value1, value2, time1, time2, time) {
