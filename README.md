@@ -270,3 +270,23 @@ of the changes at the browser's frame rate. That's good for creating UIs.
 //    var inputNode = AudioObject.inputs.get(audioObject);
 */
 -->
+
+# Development
+
+## Getting started
+
+Install the dependencies
+
+    npm install
+
+Compile the source and run the tests
+
+    gulp
+
+or run this tasks when a file changes
+
+    gulp watch
+
+## Release a new version
+
+Increment the version number according to [SemVer](http://semver.org/) in the `package.json`

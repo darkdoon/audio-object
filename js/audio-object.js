@@ -5,7 +5,7 @@
 	console.log('http://github.com/soundio/audio-object');
 	console.log('A wrapper for Web Audio sub-graphs');
 	console.log('——————————————————————————————————————');
-})(this);
+})(window);
 
 (function(window) {
 	"use strict";
