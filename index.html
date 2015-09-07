@@ -29,164 +29,13 @@
 	var gainNode = audio.createGain();
 	var gainParam = gainNode.gain;
 
-	var paramMap = new WeakMap();
-
-	var methods = {
-		"step":        "setValueAtTime",
-		"linear":      "linearRampToValueAtTime",
-		"exponential": "exponentialRampToValueAtTime",
-		"target":      "setTargetAtTime"
-	};
-
-	// Implement the automation curves described at
-	// http://webaudio.github.io/web-audio-api/#h4_methods-3
-
-	var curves = {
-		'step': function stepValueAtTime(value1, value2, time1, time2, time) {
-			return time < time2 ? value1 : value2 ;
-		},
-
-		'linear': function linearValueAtTime(value1, value2, time1, time2, time) {
-			return value1 + (value2 - value1) * (time - time1) / (time2 - time1) ;
-		},
-
-		'exponential': function exponentialValueAtTime(value1, value2, time1, time2, time) {
-			return value1 * Math.pow(value2 / value1, (time - time1) / (time2 - time1)) ;
-		},
-
-		'target': function targetValueAtTime(value1, value2, time1, time2, time, duration) {
-			return time < time2 ?
-				value1 :
-				value2 + (value1 - value2) * Math.pow(Math.E, -(time - time2) / duration);
-		}
-	};
-
-	function getValueBetweenEvents(events, n, time) {
-		var event1 = events[n];
-		var event2 = events[n + 1];
-		var time1  = event1[0];
-		var time2  = event2[0];
-		var value1 = event1[1];
-		var value2 = event2[1];
-		var curve  = event2[2];
-		var duration = event2[3];
-
-		return curves[curve](value1, value2, time1, time2, time, duration);
-	}
-
-	function getValueAtEvent(events, n, time) {
-		if (events[n][2] === "target") {
-			return curves.target(getValueAtEvent(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
-		}
-		else {
-			return events[n][1];
-		}
-	}
-
-	function paramEventsValueAtTime(param, events, time) {
-		var n = events.length;
-
-		while (events[--n] && events[n][0] >= time);
-
-		var event1 = events[n];
-		var event2 = events[n + 1];
-
-		if (!event2) {
-			return getValueAtEvent(events, n, time) ;
-		}
-
-		if (event2[0] === time) {
-			// Spool through to find last event at this time
-			while (events[++n] && events[n][0] === time);
-			return getValueAtEvent(events, --n, time) ;
-		}
-
-		if (time < event2[0]) {
-			return event2[2] === "linear" || event2[2] === "exponential" ?
-				getValueBetweenEvents(events, n, time) :
-				getValueAtEvent(events, n, time) ;
-		}
-	}
-
-	function paramValueAtTime(param, time) {
-		var events = paramMap.get(param);
-
-		if (!events || events.length === 0) {
-			return param.value;
-		}
-
-		return paramEventsValueAtTime(param, events, time);
-	}
-
-	function getParamEvents(param) {
-		var events = paramMap.get(param);
-
-		if (!events) {
-			events = [[0, param.value]];
-			paramMap.set(param, events);
-		}
-
-		return events;
-	}
-
-	function automateParamEvents(param, events, time, value, curve, duration) {
-		var n = events.length;
-		var event = Array.prototype.slice.call(arguments, 2);
-		var event1, event2;
-
-		while (--n) {
-			event1 = events[n];
-			event2 = events[n + 1];
-			if (event1[0] < time) { break; }
-		}
-
-		var method = methods[curve];
-
-		// Automate the param
-		param[method](value, time, duration);
-
-		// If the new event is at the end of the events list
-		if (!event2) {
-			events.push(event);
-			return;
-		}
-
-		// If the new event is at the same time as an
-		// existing event spool forward through events at
-		// this time and if an event with the same curve is
-		// found, replace it
-		if (event2[0] === time) {
-			while (events[++n] && events[n][0] === time) {
-				if (events[n][2] === curve) {
-					events.splice(n + 1, 1, event);
-					return;
-				}
-			}
-
-			--n;
-		}
-
-		// The new event is between event1 and event2
-		events.splice(n + 1, 0, event);
-	}
-
-	function automateParam(param, time, value, curve, duration) {
-		var events = getParamEvents(param);
-		automateParamEvents(param, events, time, value, curve, duration);
-	}
-
-	function automate(name, time, value, curve, duration) {
-		curve = curve || "step";
-		duration = curve === "step" ? 0 : duration ;
-	}
 
 
 
 
 
 
-
-
+	// Render automation curve
 
 	var param = gainParam;
 	var canvas = document.getElementById('canvas');
@@ -207,7 +56,7 @@
 		context.clearRect(0, 0, w, h);
 
 		while (t--) {
-			value = paramValueAtTime(param, t / 100);
+			value = AudioObject.valueAtTime(param, t / 100);
 			context.fillRect(t, h - value * h, 1, value * h);
 		}
 	}
@@ -217,21 +66,21 @@
 		setTimeout(triggerRender, 1000);
 	}
 
-	automateParam(gainParam, 0.2, 0.25, "step");
-	automateParam(gainParam, 1, 0.75, "linear");
-	automateParam(gainParam, 3, 0.125, "exponential");
-	automateParam(gainParam, 3.5, 1, "exponential");
+	AudioObject.automate2(gainParam, 0.2, 0.25, "step");
+	AudioObject.automate2(gainParam, 1, 0.75, "linear");
+	AudioObject.automate2(gainParam, 3, 0.125, "exponential");
+	AudioObject.automate2(gainParam, 3.5, 1, "exponential");
 	// When target is followed by a linear or exponential
 	// event, it behaves like a step event.
-	automateParam(gainParam, 4, 0.1, "target", 1);
-	automateParam(gainParam, 7, 1, "exponential");
+	AudioObject.automate2(gainParam, 4, 0.1, "target", 1);
+	AudioObject.automate2(gainParam, 7, 1, "exponential");
 
 	setTimeout(function() {
-		var value = paramValueAtTime(gainParam, 6);
-		automateParam(gainParam, 6, value, "exponential");
-		automateParam(gainParam, 7.125, 0.75, "target", 0.5);
-		automateParam(gainParam, 7.5, 0.125, "target", 0.4);
-		automateParam(gainParam, 9.2, 1, "target", 0.6);
+		var value = AudioObject.valueAtTime(gainParam, 6);
+		AudioObject.automate2(gainParam, 6, value, "exponential");
+		AudioObject.automate2(gainParam, 7.125, 0.75, "target", 0.5);
+		AudioObject.automate2(gainParam, 7.5, 0.125, "target", 0.4);
+		AudioObject.automate2(gainParam, 9.2, 1, "target", 0.6);
 	}, 5000);
 
 	triggerRender();
@@ -240,8 +89,6 @@
 	window.render = render;
 	window.gainNode = gainNode;
 	window.gainParam = gainParam;
-	window.paramValueAtTime = paramValueAtTime;
-	window.automateParam = automateParam;
 
 
 
@@ -249,6 +96,7 @@
 
 
 
+	// Render output from gainNode
 
 	var assign = Object.assign;
 	var cache = [];
