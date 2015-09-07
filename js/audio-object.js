@@ -524,9 +524,8 @@
 		var time1  = time;
 		var time2  = time + duration;
 
-		return automateParam(param, curve === "decay" ? time1 : time2, );
-
-		return automateToValue(param, value1, value2, time1, time2, curve);
+		return automateParam(param, curve === "decay" ? time1 : time2, value2, curve, duration);
+		//return automateToValue(param, value1, value2, time1, time2, curve);
 	};
 
 	AudioObject.automate2 = automateParam;
