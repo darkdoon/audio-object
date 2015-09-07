@@ -519,12 +519,11 @@
 	features.disconnectParameters = testDisconnectParameters();
 
 	AudioObject.automate = function(param, time, value, curve, duration) {
-		var value1 = param.value;
 		var value2 = value;
 		var time1  = time;
-		var time2  = time + duration;
+		var time2  = time + (duration || 0);
 
-		return automateParam(param, curve === "decay" ? time1 : time2, value2, curve, duration);
+		return automateParam(param, curve === "decay" ? time1 : time2, value2, curve === "decay" ? "target" : curve, duration);
 		//return automateToValue(param, value1, value2, time1, time2, curve);
 	};
 
