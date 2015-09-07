@@ -1,3 +1,14 @@
+<style>
+	h2 { font-family: monospace; }
+	canvas { width: 1000; height: 200; border-bottom: 1px solid black; }
+	canvas + canvas { margin-top: -201px; }
+</style>
+
+<h2>automate(param, time, value, curve)</h2>
+
+<canvas id="canvas" width="1000" height="200"></canvas>
+<canvas id="canvas-2" width="1000" height="200"></canvas>
+
 <script src="js/audio-object.js"></script>
 <script>
 (function() {
@@ -14,7 +25,302 @@
 	
 	var a1 = AudioObject(audio, i1, o1);
 	var a2 = AudioObject(audio, i2, o2);
-	a1.connect(a2);
-	//a2.connect(a1, 1, 0); // This should error! 
+
+	var gainNode = audio.createGain();
+	var gainParam = gainNode.gain;
+
+	var paramMap = new WeakMap();
+
+	var methods = {
+		"step":        "setValueAtTime",
+		"linear":      "linearRampToValueAtTime",
+		"exponential": "exponentialRampToValueAtTime",
+		"target":      "setTargetAtTime"
+	};
+
+	// Implement the automation curves described at
+	// http://webaudio.github.io/web-audio-api/#h4_methods-3
+
+	var curves = {
+		'step': function stepValueAtTime(value1, value2, time1, time2, time) {
+			return time < time2 ? value1 : value2 ;
+		},
+
+		'linear': function linearValueAtTime(value1, value2, time1, time2, time) {
+			return value1 + (value2 - value1) * (time - time1) / (time2 - time1) ;
+		},
+
+		'exponential': function exponentialValueAtTime(value1, value2, time1, time2, time) {
+			return value1 * Math.pow(value2 / value1, (time - time1) / (time2 - time1)) ;
+		},
+
+		'target': function targetValueAtTime(value1, value2, time1, time2, time, duration) {
+			return time < time2 ?
+				value1 :
+				value2 + (value1 - value2) * Math.pow(Math.E, -(time - time2) / duration);
+		}
+	};
+
+	function getValueAtTime(event1, event2, time) {
+		var time1  = event1[0];
+		var time2  = event2[0];
+		var value1 = event1[1];
+		var value2 = event2[1];
+		var curve  = event2[2];
+		var duration = event2[3];
+
+		return curves[curve](value1, value2, time1, time2, time, duration);
+	}
+
+	function paramValueAtTime(param, time) {
+		var events = paramMap.get(param);
+
+		if (!events) {
+			return param.value;
+		}
+
+		var n = -1;
+		var event0, event1, event2;
+
+		while (++n < events.length) {
+			event0 = events[n - 1];
+			event1 = events[n];
+			event2 = events[n + 1];
+
+			if (!event2) {
+				return event1[2] === "target" ?
+					curves.target(event0[1], event1[1], event0[0], event1[0], time, event1[3]) :
+					event1[1] ;
+			}
+
+			if (time === event2[0]) {
+				return event2[2] === "target" ?
+					event1[1] :
+					event2[1] ;
+			}
+
+			if (time < event2[0]) {
+				return getValueAtTime(event1, event2, time) ;
+			}
+		}
+	}
+
+
+	function automateParam(param, time, value, curve, duration) {
+		var events = paramMap.get(param);
+		var event = Array.prototype.slice.call(arguments, 1);
+
+		if (!events) {
+			events = [[0, param.value]];
+			paramMap.set(param, events);
+		}
+
+		var n = -1;
+		var eventTime = 0;
+		var event1, event2;
+
+		while (++n < events.length) {
+			event1 = events[n];
+			event2 = events[n + 1];
+
+			if (!event2 || time <= event2[0]) { break; }
+		}
+
+		var method = methods[curve];
+
+		if (!event2) {
+			param[method](value, time, duration);
+			events.push(event);
+			console.table(events);
+			return;
+		}
+
+		if (event2[0] === time) {
+			param[method](value, time, duration);
+
+			if (event2[2] === curve) {
+				// The next event is the same type and at the
+				// time of new event. Replace it.
+				events.splice(n + 1, 1, event);
+			}
+			else {
+				// Spool forward until there are no more
+				// events at this time
+				while (events[++n] && events[n][0] === time);
+				events.splice(n, 1, event);
+			}
+
+			console.table(events);
+			return;
+		}
+
+		if (event2[2] === "target") {
+			// Hmmm.
+			return;
+		}
+
+		// The next event is between 1 and 2. Insert it.
+		param[method](value, time, duration);
+		events.splice(n + 1, 0, event);
+		console.table(events);
+	}
+
+
+
+
+
+
+
+
+
+	var param = gainParam;
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext("2d");
+	var w = canvas.width;
+	var h = canvas.height;
+
+	function requestAnimationFrame(fn, n) {
+		window.requestAnimationFrame(--n === 0 ? fn : function() {
+			requestAnimationFrame(fn, n);
+		});
+	}
+
+	function render() {
+		var t = w;
+		var value;
+
+		context.clearRect(0, 0, w, h);
+
+		while (t--) {
+			value = paramValueAtTime(param, t / 100);
+			context.fillRect(t, h - value * h, 1, value * h);
+		}
+	}
+
+	function triggerRender() {
+		render();
+		setTimeout(triggerRender, 1000);
+	}
+
+	automateParam(gainParam, 0.2, 0.25, "step");
+	automateParam(gainParam, 1, 0.75, "linear");
+	automateParam(gainParam, 3, 0.125, "exponential");
+	automateParam(gainParam, 3.5, 1, "exponential");
+	// When target is followed by a linear or exponential
+	// event, it behaves like a step event.
+	automateParam(gainParam, 4, 0.1, "target", 1);
+	automateParam(gainParam, 7, 1, "exponential");
+
+	setTimeout(function() {
+		var value = paramValueAtTime(gainParam, 6);
+		automateParam(gainParam, 6, value, "exponential");
+		automateParam(gainParam, 7.5, 0.125, "target", 0.6);
+		automateParam(gainParam, 8.75, 1, "target", 0.6);
+	}, 5000);
+
+	triggerRender();
+
+	window.context = context;
+	window.render = render;
+	window.gainNode = gainNode;
+	window.gainParam = gainParam;
+	window.paramValueAtTime = paramValueAtTime;
+	window.automateParam = automateParam;
+
+
+
+
+
+
+
+
+	var assign = Object.assign;
+	var cache = [];
+
+	function UnityNode(audio) {
+		var oscillator = audio.createOscillator();
+		var waveshaper = audio.createWaveShaper();
+
+		var curve = new Float32Array(2);
+		curve[0] = curve[1] = 1;
+
+		oscillator.type = 'square';
+		oscillator.connect(waveshaper);
+		oscillator.frequency.value = 100;
+		waveshaper.curve = curve;
+		oscillator.start();
+
+		return waveshaper;
+	}
+
+	// Signal Detector Audio object
+
+	function SignalDetectorAudioObject(audio, settings) {
+		var options = assign({}, settings);
+		var object = this;
+		var scriptNode = audio.createScriptProcessor(256, 1, 1);
+		var signal;
+
+		scriptNode.channelCountMode = "explicit";
+
+		// Script nodes should be kept in memory to avoid Chrome bugs, and also
+		// need to be connected to destination to avoid garbage collection. This
+		// is ok, as we're not sending any sound out of this script node.
+		cache.push(scriptNode);
+		scriptNode.connect(audio.destination);
+
+		scriptNode.onaudioprocess = function(e) {
+			var buffer = e.inputBuffer.getChannelData(0);
+			var n = buffer.length;
+			object.signal = buffer[0];
+			outputs.push(object.signal);
+		};
+
+		AudioObject.call(this, audio, scriptNode);
+		this.signal = 0;
+		outputs.push(this.signal);
+
+		this.destroy = function() {
+			scriptNode.disconnect();
+			var i = cache.indexOf(scriptNode);
+			if (i > -1) { cache.splice(i, 1); }
+		};
+	}
+
+	var outputs = [];
+	var unityNode = UnityNode(audio);
+	var signalDetector = new SignalDetectorAudioObject(audio);
+	var signalDetectorNode = AudioObject.getInput(signalDetector);
+
+	unityNode.connect(gainNode);
+	gainNode.connect(signalDetectorNode);
+
+	var canvas2 = document.getElementById('canvas-2');
+	var context2 = canvas2.getContext("2d");
+	var w = canvas2.width;
+	var h = canvas2.height;
+
+	context2.fillStyle = 'rgba(200, 120, 20, 0.6)';
+
+	function render2() {
+		var t = w;
+		var c = (44100 * 10 / 256) / w ;
+		var value;
+
+		context2.clearRect(0, 0, w, h);
+
+		while (t--) {
+			value = outputs[Math.ceil(t * c)] || 0;
+			context2.fillRect(t, h - value * h, 1, value * h);
+		}
+	}
+
+	function triggerRender2() {
+		render2();
+		if (outputs.length > 2000) { return; }
+		window.requestAnimationFrame(triggerRender2);
+	}
+
+	triggerRender2();
 })();
 </script>
