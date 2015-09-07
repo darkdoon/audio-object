@@ -72,6 +72,15 @@
 		return curves[curve](value1, value2, time1, time2, time, duration);
 	}
 
+	function getValue(events, n, time) {
+		if (events[n][2] === "target") {
+			return curves.target(getValue(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
+		}
+		else {
+			return events[n][1];
+		}
+	}
+
 	function paramValueAtTime(param, time) {
 		var events = paramMap.get(param);
 
@@ -80,27 +89,26 @@
 		}
 
 		var n = -1;
-		var event0, event1, event2;
+		var event1, event2;
 
 		while (++n < events.length) {
-			event0 = events[n - 1];
 			event1 = events[n];
 			event2 = events[n + 1];
 
 			if (!event2) {
-				return event1[2] === "target" ?
-					curves.target(event0[1], event1[1], event0[0], event1[0], time, event1[3]) :
-					event1[1] ;
+				return getValue(events, n, time) ;
 			}
 
 			if (time === event2[0]) {
 				return event2[2] === "target" ?
-					event1[1] :
+					getValue(events, n, time) :
 					event2[1] ;
 			}
 
 			if (time < event2[0]) {
-				return getValueAtTime(event1, event2, time) ;
+				return event2[2] === "linear" || event2[2] === "exponential" ?
+					getValueAtTime(event1, event2, time) :
+					getValue(events, n, time) ;
 			}
 		}
 	}
@@ -147,7 +155,7 @@
 				// Spool forward until there are no more
 				// events at this time
 				while (events[++n] && events[n][0] === time);
-				events.splice(n, 1, event);
+				events.splice(n, 0, event);
 			}
 
 			console.table(events);
@@ -155,6 +163,9 @@
 		}
 
 		if (event2[2] === "target") {
+			param[method](value, time, duration);
+			events.splice(n + 1, 0, event);
+			console.table(events);
 			// Hmmm.
 			return;
 		}
@@ -214,8 +225,9 @@
 	setTimeout(function() {
 		var value = paramValueAtTime(gainParam, 6);
 		automateParam(gainParam, 6, value, "exponential");
-		automateParam(gainParam, 7.5, 0.125, "target", 0.6);
-		automateParam(gainParam, 8.75, 1, "target", 0.6);
+		automateParam(gainParam, 7.125, 0.75, "target", 0.5);
+		automateParam(gainParam, 7.5, 0.125, "target", 0.4);
+		automateParam(gainParam, 9.2, 1, "target", 0.6);
 	}, 5000);
 
 	triggerRender();
