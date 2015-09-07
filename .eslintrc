@@ -1,12 +1,4 @@
 {
-  "ecmaFeatures": {
-    "arrowFunctions": true,
-    "classes": true,
-    "defaultParams", true,
-    "modules": true,
-    "octalLiterals": true,
-    "templateStrings": true
-  },
   "rules": {
     "semi": 2
   }

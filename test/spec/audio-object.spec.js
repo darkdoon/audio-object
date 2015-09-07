@@ -1,9 +1,9 @@
 describe('AudioObject', function () {
 
-  let audio, n1, n2;
-  let AudioObject;
+  var audio, n1, n2;
+  var AudioObject;
 
-  beforeEach(() => {
+  beforeEach(function() {
     audio = new window.AudioContext();
     n1 = audio.createGain();
     n2 = audio.createGain();
@@ -11,9 +11,9 @@ describe('AudioObject', function () {
     AudioObject = window.AudioObject;
   });
 
-  describe('constructor', function () {
+  describe('constructor', function() {
 
-    it('should link input and output', ()=>{
+    it('should link input and output', function() {
       var object = AudioObject(audio, n1, n2);
       
       expect(AudioObject.getInput(object)).toEqual(n1);

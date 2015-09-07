@@ -44,15 +44,7 @@ var $ = require('gulp-load-plugins')(CONFIG.plugins.loadPlugins);
 var source = require('vinyl-source-stream');
 var stream = require('event-stream');
 var karma = require('karma').server;
-var browserify = require('browserify');
-var babelify = require('babelify');
 var glob = require('glob-all');
-
-// Clean the build directory
-gulp.task('clean:build', function() {
-  return gulp.src(CONFIG.dir.build)
-    .pipe($.clean());
-});
 
 // Lint the source files
 gulp.task('lint:src', function() {
@@ -70,29 +62,6 @@ gulp.task('lint:src', function() {
     .pipe($.eslint.failOnError());
 });
 
-function gulpES6Transpile(files, dest) {
-  // map them to our stream function
-  var tasks = files.map(function(entry) {
-    return browserify({ entries: [entry] })
-      .transform(babelify)
-      .bundle()
-      .pipe(source(entry))
-      .pipe(gulp.dest(dest)); 
-    });
-  // create a merged stream
-  return stream.merge.apply(null, tasks);
-}
-
-// Transpile source files from ES6 into ES5
-gulp.task('transpile:src', function() {
-  return gulpES6Transpile(
-    glob.sync([
-      CONFIG.files.src
-    ]),
-    CONFIG.dir.build
-  )
-});
-
 // Run the unit tests
 gulp.task('test:spec', function(done) {
   return karma
@@ -107,7 +76,7 @@ gulp.task('test:spec', function(done) {
 });
 
 gulp.task('default', function(done) {
-  $.runSequence(['clean:build', 'lint:src', 'test:spec', 'transpile:src'], done);
+  $.runSequence(['lint:src', 'test:spec'], done);
 });
 
 gulp.task('watch', function() {
