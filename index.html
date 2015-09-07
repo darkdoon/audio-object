@@ -1,6 +1,6 @@
 <style>
 	h2 { font-family: monospace; }
-	canvas { width: 1000; height: 200; border-bottom: 1px solid black; }
+	canvas { display: block; width: 1000; height: 200; border-bottom: 1px solid black; }
 	canvas + canvas { margin-top: -201px; }
 </style>
 
@@ -61,7 +61,9 @@
 		}
 	};
 
-	function getValueAtTime(event1, event2, time) {
+	function getValueBetweenEvents(events, n, time) {
+		var event1 = events[n];
+		var event2 = events[n + 1];
 		var time1  = event1[0];
 		var time2  = event2[0];
 		var value1 = event1[1];
@@ -72,108 +74,110 @@
 		return curves[curve](value1, value2, time1, time2, time, duration);
 	}
 
-	function getValue(events, n, time) {
+	function getValueAtEvent(events, n, time) {
 		if (events[n][2] === "target") {
-			return curves.target(getValue(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
+			return curves.target(getValueAtEvent(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
 		}
 		else {
 			return events[n][1];
 		}
 	}
 
-	function paramValueAtTime(param, time) {
-		var events = paramMap.get(param);
+	function paramEventsValueAtTime(param, events, time) {
+		var n = events.length;
 
-		if (!events) {
-			return param.value;
+		while (events[--n] && events[n][0] >= time);
+
+		var event1 = events[n];
+		var event2 = events[n + 1];
+
+		if (!event2) {
+			return getValueAtEvent(events, n, time) ;
 		}
 
-		var n = -1;
-		var event1, event2;
+		if (event2[0] === time) {
+			// Spool through to find last event at this time
+			while (events[++n] && events[n][0] === time);
+			return getValueAtEvent(events, --n, time) ;
+		}
 
-		while (++n < events.length) {
-			event1 = events[n];
-			event2 = events[n + 1];
-
-			if (!event2) {
-				return getValue(events, n, time) ;
-			}
-
-			if (time === event2[0]) {
-				return event2[2] === "target" ?
-					getValue(events, n, time) :
-					event2[1] ;
-			}
-
-			if (time < event2[0]) {
-				return event2[2] === "linear" || event2[2] === "exponential" ?
-					getValueAtTime(event1, event2, time) :
-					getValue(events, n, time) ;
-			}
+		if (time < event2[0]) {
+			return event2[2] === "linear" || event2[2] === "exponential" ?
+				getValueBetweenEvents(events, n, time) :
+				getValueAtEvent(events, n, time) ;
 		}
 	}
 
-
-	function automateParam(param, time, value, curve, duration) {
+	function paramValueAtTime(param, time) {
 		var events = paramMap.get(param);
-		var event = Array.prototype.slice.call(arguments, 1);
+
+		if (!events || events.length === 0) {
+			return param.value;
+		}
+
+		return paramEventsValueAtTime(param, events, time);
+	}
+
+	function getParamEvents(param) {
+		var events = paramMap.get(param);
 
 		if (!events) {
 			events = [[0, param.value]];
 			paramMap.set(param, events);
 		}
 
-		var n = -1;
-		var eventTime = 0;
+		return events;
+	}
+
+	function automateParamEvents(param, events, time, value, curve, duration) {
+		var n = events.length;
+		var event = Array.prototype.slice.call(arguments, 2);
 		var event1, event2;
 
-		while (++n < events.length) {
+		while (--n) {
 			event1 = events[n];
 			event2 = events[n + 1];
-
-			if (!event2 || time <= event2[0]) { break; }
+			if (event1[0] < time) { break; }
 		}
 
 		var method = methods[curve];
 
-		if (!event2) {
-			param[method](value, time, duration);
-			events.push(event);
-			console.table(events);
-			return;
-		}
-
-		if (event2[0] === time) {
-			param[method](value, time, duration);
-
-			if (event2[2] === curve) {
-				// The next event is the same type and at the
-				// time of new event. Replace it.
-				events.splice(n + 1, 1, event);
-			}
-			else {
-				// Spool forward until there are no more
-				// events at this time
-				while (events[++n] && events[n][0] === time);
-				events.splice(n, 0, event);
-			}
-
-			console.table(events);
-			return;
-		}
-
-		if (event2[2] === "target") {
-			param[method](value, time, duration);
-			events.splice(n + 1, 0, event);
-			console.table(events);
-			// Hmmm.
-			return;
-		}
-
-		// The next event is between 1 and 2. Insert it.
+		// Automate the param
 		param[method](value, time, duration);
+
+		// If the new event is at the end of the events list
+		if (!event2) {
+			events.push(event);
+			return;
+		}
+
+		// If the new event is at the same time as an
+		// existing event spool forward through events at
+		// this time and if an event with the same curve is
+		// found, replace it
+		if (event2[0] === time) {
+			while (events[++n] && events[n][0] === time) {
+				if (events[n][2] === curve) {
+					events.splice(n + 1, 1, event);
+					return;
+				}
+			}
+
+			--n;
+		}
+
+		// The new event is between event1 and event2
 		events.splice(n + 1, 0, event);
-		console.table(events);
+	}
+
+	function automateParam(param, time, value, curve, duration) {
+		var events = getParamEvents(param);
+		automateParamEvents(param, events, time, value, curve, duration);
+	}
+
+	function automate(name, time, value, curve, duration) {
+		curve = curve || "step";
+		duration = curve === "step" ? 0 : duration ;
 	}
 
 
