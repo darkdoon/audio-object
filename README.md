@@ -111,17 +111,18 @@ Disconnects output <code>outputName</code> from <code>destination</code>'s
 
 Input and output names were defined when the AudioObject was first constructed. -->
 
-#### .automate(name, value, duration, [curve])
+#### .automate(name, time, value, curve, duration)
 
 Automate a property. The property <code>name</code> will ramp to <code>value</code>
 from it's current value over <code>duration</code> (in seconds). The optional
-parameter <code>curve</code> can be either <code>'linear'</code> (the default) or
-<code>'exponential'</code>.
+parameter <code>curve</code> can be either <code>"step"</code> (the default),
+<code>"linear"</code>, <code>"exponential"</code> or <code>"target"</code>.
 
-    audioObject.automate('level', 0, 1.2)
+    audioObject.automate('level', 1.2, 0)
 
-Properties of the audioObject are updated at the browser's frame rate during an
-automation.
+Properties of the audioObject are externally updated at the browser's frame rate
+during an automation, while internally the Web Audio API schedules them at the
+sample rate (or at the relevant rate of the audio param).
 
 Note that while the Web Audio API only accepts positive non-zero values for
 exponential curves, an audioObject will accept a zero value. It exponentially
@@ -203,8 +204,8 @@ with that.
     AudioObject.defineAudioProperties(object, audioContext, {
         response: {
             set: function(value, time, duration, curve) {
-                AudioObject.automate(compressor.attack, value, time, duration, curve);
-                AudioObject.automate(compressor.release, value * 6, time, duration, curve);
+                AudioObject.automate(compressor.attack, time, value, curve, duration);
+                AudioObject.automate(compressor.release, time, value * 6, curve, duration);
             },
 
             defaultValue: 1,

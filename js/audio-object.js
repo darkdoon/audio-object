@@ -421,7 +421,7 @@
 	// Feature tests
 	features.disconnectParameters = testDisconnectParameters();
 
-	AudioObject.automate = function(param, value, time, duration, curve) {
+	AudioObject.automate = function(param, time, value, curve, duration) {
 		var value1 = param.value;
 		var value2 = value;
 		var time1  = time;
