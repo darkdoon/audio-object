@@ -233,7 +233,14 @@
 
 		var event = events[n + 1];
 
-		if (!event) { return; }
+		if (!event) {
+			if (events[n]) {
+				var value = getValueAtEvent(events, n, time);
+				automateParamEvents(param, events, time, value, "step");
+			}
+
+			return;
+		}
 
 		param.cancelScheduledValues(time);
 
@@ -506,26 +513,6 @@
 	}
 
 	var prototype = {
-		trigger: function(time, type) {
-			var args = arguments;
-
-			if (type === 'control') {
-				return this.automate(args[2], args[3], time, args[4], args[5]);
-			}
-
-			if (type === 'pitch') {
-				return this.automate('pitch', args[2], time);
-			}
-
-			if (type === 'noteon') {
-				return this.start && this.start(time, args[2], args[3]);
-			}
-
-			if (type === 'noteoff') {
-				return this.stop && this.stop(time, args[2]);
-			}
-		},
-
 		automate: function(name, value, time, curve, duration) {
 			var automators = automatorMap.get(this);
 
@@ -549,6 +536,15 @@
 			return this;
 		},
 
+		truncate: function(name, time) {
+			//var param = ??
+			//var events = paramMap.get(param);
+
+			//if (!events) { return; }
+
+			//truncateParamEvents(param, events, time);
+		},
+
 		destroy: noop
 	};
 
@@ -559,12 +555,11 @@
 	features.disconnectParameters = testDisconnectParameters();
 
 	AudioObject.automate = function(param, time, value, curve, duration) {
-		var value2 = value;
-		var time1  = time;
-		var time2  = time + (duration || 0);
+		time = curve === "linear" || curve === "exponential" ?
+			time + duration :
+			time ;
 
-		return automateParam(param, curve === "decay" ? time1 : time2, value2, curve === "decay" ? "target" : curve, duration);
-		//return automateToValue(param, value1, value2, time1, time2, curve);
+		return automateParam(param, time, value, curve === "decay" ? "target" : curve, curve === "decay" && duration || undefined);
 	};
 
 	AudioObject.truncate = function(param, time) {
@@ -590,6 +585,8 @@
 		value: minExponentialValue,
 		enumerable: true
 	});
+
+	AudioObject.getParamEvents = getParamEvents;
 
 	window.AudioObject = AudioObject;
 })(window);
