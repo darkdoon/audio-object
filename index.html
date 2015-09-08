@@ -73,14 +73,16 @@
 	// When target is followed by a linear or exponential
 	// event, it behaves like a step event.
 	AudioObject.automate2(gainParam, 4, 0.1, "target", 1);
-	AudioObject.automate2(gainParam, 7, 1, "exponential");
+	AudioObject.automate2(gainParam, 7, 1, "target", 3);
 
 	setTimeout(function() {
-		var value = AudioObject.valueAtTime(gainParam, 6);
-		AudioObject.automate2(gainParam, 6, value, "exponential");
-		AudioObject.automate2(gainParam, 7.125, 0.75, "target", 0.5);
-		AudioObject.automate2(gainParam, 7.5, 0.125, "target", 0.4);
-		AudioObject.automate2(gainParam, 9.2, 1, "target", 0.6);
+//		var value = AudioObject.valueAtTime(gainParam, 6);
+//		AudioObject.automate2(gainParam, 6, value, "exponential");
+//		AudioObject.automate2(gainParam, 7.125, 0.75, "target", 0.5);
+//		AudioObject.automate2(gainParam, 7.5, 0.125, "target", 0.4);
+//		AudioObject.automate2(gainParam, 9.2, 1, "target", 0.6);
+
+		AudioObject.truncate(gainParam, 6);
 	}, 5000);
 
 	triggerRender();

@@ -226,6 +226,46 @@
 		return events;
 	}
 
+	function truncateParamEvents(param, events, time) {
+		var n = events.length;
+
+		while (events[--n] && events[n][0] >= time);
+
+		var event = events[n + 1];
+
+		if (!event) { return; }
+
+		param.cancelScheduledValues(time);
+
+		if (event[0] === time) {
+			events.splice(n + 1);
+
+			// Reschedule lopped curve
+			if (curve === "linear" || curve === "exponential") {
+				automateParamEvents(param, events, time, event[1], event[2], event[3]);
+			}
+
+			return;
+		}
+
+		if (event[0] > time) {
+			var curve = event[2];
+			var value = getEventsValueAtTime(events, time);
+
+			events.splice(n + 1);
+
+			// Schedule intermediate point on the curve
+			if (curve === "linear" || curve === "exponential") {
+				automateParamEvents(param, events, time, value, curve);
+			}
+			else if (events[n] && events[n][2] === "target") {
+				automateParamEvents(param, events, time, value, "step");
+			}
+
+			return;
+		}
+	}
+
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
 		duration = curve === "step" ? 0 : duration ;
@@ -529,42 +569,10 @@
 
 	AudioObject.truncate = function(param, time) {
 		var events = paramMap.get(param);
-		var n = events.length;
 
 		if (!events) { return; }
 
-		while (events[--n] && events[n][0] >= time);
-
-		var event = events[n + 1];
-
-		if (!event) { return; }
-
-		param.cancelScheduledValues(time);
-		events.splice(n + 1);
-
-		if (event[0] === time) {
-			// Reschedule lopped curve
-			if (curve === "linear" || curve === "exponential") {
-				automateParamEvents(param, events, time, event[1], event[2], event[3]);
-			}
-
-			return;
-		}
-
-		if (event[0] > time) {
-			var curve = event[2];
-			var value = getEventsValueAtTime(events, time);
-
-			// Schedule intermediate point on the curve
-			if (curve === "linear" || curve === "exponential") {
-				automateParamEvents(param, events, time, value, curve);
-			}
-			else if (events[n] && events[n][2] === "target") {
-				automateParamEvents(param, events, time, value, "step");
-			}
-
-			return;
-		}
+		truncateParamEvents(param, events, time);
 	};
 
 	AudioObject.automate2 = automateParam;
