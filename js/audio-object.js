@@ -277,20 +277,19 @@
 		curve = curve || "step";
 		duration = curve === "step" ? 0 : duration ;
 
-		var n = events.length;
 		var event = Array.prototype.slice.call(arguments, 2);
-		var event1, event2;
+		var n = events.length;
 
-		while (--n) {
-			event1 = events[n];
-			event2 = events[n + 1];
-			if (event1[0] < time) { break; }
-		}
+		while (events[--n] && events[n][0] >= time);
 
+		var event1 = events[n];
+		var event2 = events[n + 1];
 		var method = methods[curve];
 
 		// Automate the param
 		param[method](value, time, duration);
+
+		//console.log(param, time, value, curve, duration);
 
 		// If the new event is at the end of the events list
 		if (!event2) {
