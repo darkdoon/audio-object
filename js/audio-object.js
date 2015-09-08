@@ -586,7 +586,5 @@
 		enumerable: true
 	});
 
-	AudioObject.getParamEvents = getParamEvents;
-
 	window.AudioObject = AudioObject;
 })(window);

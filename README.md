@@ -139,24 +139,35 @@ in the audioObject's audio graph.
 
 ### AudioObject functions
 
-#### .automate(param, value, time, duration, curve)
+#### .automate(param, time, value, curve, duration)
 
 Automates a value change on an AudioParam.
 
+<code>time</code> is the time to start the automation.
 <code>param</code> is the AudioParam.
 <code>value</code> is the value to automate to.
-<code>time</code> is the time to start the automation. Use <code>param.context.currentTime</code>
-to start the automation now.
-<code>duration</code> is the duration of the automation. If duration is <code>0</code> or not
-defined, <code>curve</code> is set to <code>'step'</code>. 
 <code>curve</code> is the name of the automation curve. Choices are:
 
-- <code>'step'</code>'step' uses param.setValueAtTime() to set <code>value</code> immediately
-- <code>'linear'</code> uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
-- <code>'exponential'</code> uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>"step"</code>'step' uses param.setValueAtTime() to set <code>value</code> immediately
+- <code>"linear"</code> uses <code>param.linearRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>"exponential"</code> uses <code>param.exponentialRampToValue()</code> to automate to <code>value</code> over <code>duration</code>
+- <code>"decay"</code> uses <code>param.setTargetAtTime()</code> to automate to <code>value</code> with the time constant <code>duration</code>
+
+<code>duration</code> is the duration of the automation. Not used for <code>"step"</code> events. 
 
 returns <code>undefined</code>.
 
+#### .truncate(param, time)
+
+Truncates automation events on <code>param</code> after <code>time</code>. The
+value of the param at truncate time is kept by rescheduling in-progress linear
+or exponential curves or setting a value during the tail of decay curves.
+
+returns <code>undefined</code>.
+
+#### .valueAtTime(param, time)
+
+Returns the value of <code>param</code> at <code>time</code>.
 
 <!-- #### .connections(object)
 
