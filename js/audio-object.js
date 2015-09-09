@@ -352,12 +352,11 @@
 			curve = duration ? curve || defaultCurve : 'step' ;
 
 			if (param) {
-				//automateToValue(param, value1, value2, time1, time2, curve);
 				automateParamEvents(param, events, time2, value2, curve, duration);
 			}
 			else {
-				//data.set.apply(object, arguments);
-				//events.push([time2, value2, curve, duration]);
+				data.set.apply(object, arguments);
+				events.push([time2, value2, curve, duration]);
 			}
 		}
 
