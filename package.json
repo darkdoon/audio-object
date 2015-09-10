@@ -1,7 +1,7 @@
 {
   "name": "audio-object",
   "title": "Audio Object",
-  "description": "A wrapper for a graph of AudioNodes that exposes their AudioParam values as simple getter/setters on a plain ol' JS object",
+  "description": "Provides the AudioObject() constructor, a wrapper for a graph of Web Audio Nodes. Creates an object of properties that control Audio Param values, with automation methods for scheduling changes.",
   "version": "0.5.0",
   "homepage": "http://sound.io",
   "author": {
