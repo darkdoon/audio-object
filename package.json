@@ -2,7 +2,7 @@
   "name": "audio-object",
   "title": "Audio Object",
   "description": "Provides the AudioObject() constructor, a wrapper for a graph of Web Audio Nodes. Creates an object of properties that control Audio Param values, with automation methods for scheduling changes.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "homepage": "http://sound.io",
   "author": {
     "name": "Stephen Band",
