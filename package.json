@@ -1,8 +1,8 @@
 {
-  "name": "@soundio/audio-object",
-  "title": "AudioObject",
+  "name": "audio-object",
+  "title": "Audio Object",
   "description": "A wrapper for a graph of AudioNodes that exposes their AudioParam values as simple getter/setters on a plain ol' JS object",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "homepage": "http://sound.io",
   "author": {
     "name": "Stephen Band",
@@ -14,7 +14,10 @@
   },
   "keywords": [
     "javascript",
-    "browser"
+    "browser",
+    "audio",
+    "web audio",
+    "soundio"
   ],
   "bugs": {
     "url": "https://github.com/soundio/audio-object/issues"
