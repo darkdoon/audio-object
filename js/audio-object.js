@@ -246,7 +246,7 @@
 
 		duration = curve === "step" ? 0 : duration ;
 
-		var event = Array.prototype.slice.call(arguments, 2);
+		var event = [time, value, curve, duration];
 		var method = methods[curve];
 
 		// Automate the param
