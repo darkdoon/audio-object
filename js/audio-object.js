@@ -71,59 +71,6 @@
 	}
 
 
-	// AudioParam automation
-
-	var ramps = {
-	    	'step': stepRamp,
-	    	'linear': linearRamp,
-	    	'exponential': exponentialRamp,
-	    	'decay': targetRamp
-	    };
-
-	function stepRamp(param, value1, value2, time1) {
-		param.setValueAtTime(value2, time1);
-	}
-
-	function linearRamp(param, value1, value2, time1, time2) {
-		param.setValueAtTime(value1, time1);
-		param.linearRampToValueAtTime(value2, time2);
-	}
-
-	function exponentialRamp(param, value1, value2, time1, time2) {
-		param.setValueAtTime(value1, time1);
-
-		if (value2 < 0) {
-			throw new Error('AudioObject: Cannot automate negative values via an exponential curve.');
-		}
-
-		if (value2 < minExponentialValue) {
-			// minExponentialValue is orders of magnitude lower than a single
-			// quantization step, so for all practical purposes we can safely
-			// set it to 0 immediately at the end of the exponential ramp.
-			param.exponentialRampToValueAtTime(minExponentialValue, time2);
-			param.setValueAtTime(value2, time2);
-		}
-		else {
-			param.exponentialRampToValueAtTime(value2, time2);
-		}
-	}
-
-	function targetRamp(param, value1, value2, time1, time2) {
-		param.setValueAtTime(value1, time1);
-		param.setTargetAtTime(value2, time1, time2 - time1);
-	}
-
-	function automateToValue(param, value1, value2, time1, time2, curve) {
-		// Curve defaults to 'step' where a duration is 0, and otherwise to
-		// 'linear'.
-		curve = !time2 ? 'step' :
-			time2 === time1 ? 'step' :
-			curve ? curve : 'linear' ;
-		param.cancelScheduledValues(time1);
-		ramps[curve](param, value1, value2, time1, time2);
-	}
-
-
 	// Maths
 
 	var paramMap = new WeakMap();
@@ -275,15 +222,31 @@
 
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
-		duration = curve === "step" ? 0 : duration ;
 
-		var event = Array.prototype.slice.call(arguments, 2);
 		var n = events.length;
 
 		while (events[--n] && events[n][0] >= time);
 
 		var event1 = events[n];
 		var event2 = events[n + 1];
+
+		// Swap exponential to- or from- 0 values for step
+		// curves, which is what they tend towards for low
+		// values. This does not deal with -ve values,
+		// however. It probably should.
+		if (curve === "exponential") {
+			if (value < minExponentialValue) {
+				time = event1 && event1[0] || 0 ;
+				curve = "step";
+			}
+			else if (event1 && event1[1] < minExponentialValue) {
+				curve = "step";
+			}
+		}
+
+		duration = curve === "step" ? 0 : duration ;
+
+		var event = Array.prototype.slice.call(arguments, 2);
 		var method = methods[curve];
 
 		// Automate the param
