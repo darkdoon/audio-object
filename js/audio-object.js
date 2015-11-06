@@ -3,7 +3,7 @@
 
 	console.log('AudioObject');
 	console.log('http://github.com/soundio/audio-object');
-	console.log('A wrapper for Web Audio sub-graphs');
+	//console.log('A wrapper for Web Audio sub-graphs');
 	console.log('——————————————————————————————————————');
 })(window);
 
@@ -449,20 +449,34 @@
 			throw new Error('AudioObject: new AudioObject() must be given an input OR output OR both.');
 		}
 
-		// Keep a map of inputs in AudioObject.inputs
+		// Keep a map of inputs in AudioObject.inputs. Where we're using
+		// AudioObject as a mixin, extend the inputs object if it already
+		// exists.
 		if (input) {
-			inputs.set(this, isAudioNode(input) ?
-				{ default: input } :
-				assign({}, input)
-			);
+			var inputs1 = isAudioNode(input) ? { default: input } : input ;
+			var inputs2 = inputs.get(this);
+
+			if (inputs2) {
+				assign(inputs2, inputs1);
+			}
+			else {
+				inputs.set(this, assign({}, inputs1));
+			}
 		}
 
-		// Keep a map of outputs in AudioObject.outputs
+		// Keep a map of outputs in AudioObject.outputs. Where we're using
+		// AudioObject as a mixin, extend the inputs object if it already
+		// exists.
 		if (output) {
-			outputs.set(this, isAudioNode(output) ?
-				{ default: output } :
-				assign({}, output)
-			);
+			var outputs1 = isAudioNode(output) ? { default: output } : output ;
+			var outputs2 = outputs.get(this);
+
+			if (outputs2) {
+				assign(outputs2, outputs1);
+			}
+			else {
+				outputs.set(this, assign({}, outputs1));
+			}
 		}
 
 		// Define Audio Params as getters/setters
