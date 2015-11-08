@@ -312,9 +312,13 @@
 			//var time1  = time;
 			var time2  = time + duration;
 
-			curve = duration ? curve || defaultCurve : 'step' ;
+			curve = duration ?
+				curve === "decay" ? "target" :
+					curve || defaultCurve :
+					'step' ;
 
 			if (param) {
+				automateParamEvents
 				automateParamEvents(param, events, time2, value2, curve, duration);
 			}
 			else {
@@ -354,7 +358,7 @@
 			window.requestAnimationFrame(frame);
 		}
 
-		function automate(value, time, duration, curve) {
+		function automate(value, time, curve, duration) {
 			time     = isDefined(time) ? time : audio.currentTime;
 			duration = isDefined(duration) ? duration : defaultDuration;
 
