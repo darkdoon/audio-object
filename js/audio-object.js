@@ -439,7 +439,7 @@
 	}
 
 	function AudioObject(audio, input, output, params) {
-		if (this === undefined || this === window || this.connect !== prototype.connect) {
+		if (this === undefined || this === window) {
 			// If this is undefined the constructor has been called without the
 			// new keyword, or without a context applied. Do that now.
 			return new AudioObject(audio, input, output, params);
