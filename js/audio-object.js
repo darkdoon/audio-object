@@ -46,6 +46,10 @@
 		return window.AudioParam && window.AudioParam.prototype.isPrototypeOf(object);
 	}
 
+	function isAudioObject(object) {
+		return AudioObject.prototype.isPrototypeOf(object);
+	}
+
 	function testDisconnectParameters() {
 		var audio = new AudioContext();
 
@@ -438,10 +442,6 @@
 		return map && map[isDefined(name) ? name : 'default'];
 	}
 
-	function isAudioObject(object) {
-		return prototype.isPrototypeOf(object);
-	}
-
 	function AudioObject(audio, input, output, params) {
 		if (this === undefined || this === window) {
 			// If this is undefined the constructor has been called without the
@@ -491,7 +491,7 @@
 		Object.defineProperty(this, 'audio', { value: audio });
 	}
 
-	var prototype = {
+	assign(AudioObject.prototype, {
 		automate: function(name, value, time, curve, duration) {
 			var automators = automatorMap.get(this);
 
@@ -525,40 +525,42 @@
 		},
 
 		destroy: noop
-	};
+	});
 
-	// Extend AudioObject.prototype
-	assign(AudioObject.prototype, prototype);
+	assign(AudioObject, {
+		automate: function(param, time, value, curve, duration) {
+			time = curve === "linear" || curve === "exponential" ?
+				time + duration :
+				time ;
+	
+			return automateParam(param, time, value, curve === "decay" ? "target" : curve, curve === "decay" && duration || undefined);
+		},
+	
+		truncate: function(param, time) {
+			var events = paramMap.get(param);
+	
+			if (!events) { return; }
+	
+			truncateParamEvents(param, events, time);
+		},
 
-	// Feature tests
-	features.disconnectParameters = testDisconnectParameters();
+		features: {
+			disconnectParameters: testDisconnectParameters()
+		},
 
-	AudioObject.automate = function(param, time, value, curve, duration) {
-		time = curve === "linear" || curve === "exponential" ?
-			time + duration :
-			time ;
-
-		return automateParam(param, time, value, curve === "decay" ? "target" : curve, curve === "decay" && duration || undefined);
-	};
-
-	AudioObject.truncate = function(param, time) {
-		var events = paramMap.get(param);
-
-		if (!events) { return; }
-
-		truncateParamEvents(param, events, time);
-	};
-
-	AudioObject.automate2 = automateParam;
-	AudioObject.valueAtTime = getParamValueAtTime;
-	AudioObject.getInput = getInput;
-	AudioObject.getOutput = getOutput;
-	AudioObject.features = features;
-	AudioObject.defineInputs = defineInputs;
-	AudioObject.defineOutputs = defineOutputs;
-	AudioObject.defineAudioProperty = defineAudioProperty;
-	AudioObject.defineAudioProperties = defineAudioProperties;
-	AudioObject.isAudioObject = isAudioObject;
+		automate2: automateParam,
+		valueAtTime: getParamValueAtTime,
+		defineInputs: defineInputs,
+		defineOutputs: defineOutputs,
+		defineAudioProperty: defineAudioProperty,
+		defineAudioProperties: defineAudioProperties,
+		getInput: getInput,
+		getOutput: getOutput,
+		isAudioContext: isAudioContext,
+		isAudioNode: isAudioNode,
+		isAudioParam: isAudioParam,
+		isAudioObject: isAudioObject
+	});
 
 	Object.defineProperty(AudioObject, 'minExponentialValue', {
 		value: minExponentialValue,
