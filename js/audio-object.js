@@ -77,8 +77,6 @@
 
 	// Maths
 
-	var paramMap = new WeakMap();
-
 	var methods = {
 		"step":        "setValueAtTime",
 		"linear":      "linearRampToValueAtTime",
@@ -157,7 +155,7 @@
 	}
 
 	function getParamValueAtTime(param, time) {
-		var events = paramMap.get(param);
+		var events = param['audio-object-events'];
 
 		if (!events || events.length === 0) {
 			return param.value;
@@ -167,11 +165,15 @@
 	}
 
 	function getParamEvents(param) {
-		var events = paramMap.get(param);
-console.log(AudioObject.isAudioParam(param));
+		// I would love to use a WeakMap to store data about
+		// AudioParams, but FF refuses to allow that. I'm
+		// going to use an expando, against my better
+		// judgement, but let's come back to this problem.
+		var events = param['audio-object-events'];
+
 		if (!events) {
 			events = [[0, param.value]];
-			paramMap.set(param, events);
+			param['audio-object-events'] = events;
 		}
 
 		return events;
@@ -255,8 +257,6 @@ console.log(AudioObject.isAudioParam(param));
 
 		// Automate the param
 		param[method](value, time, duration);
-
-		//console.log(param, time, value, curve, duration);
 
 		// If the new event is at the end of the events list
 		if (!event2) {
@@ -532,15 +532,14 @@ console.log(AudioObject.isAudioParam(param));
 			time = curve === "linear" || curve === "exponential" ?
 				time + duration :
 				time ;
-	
+
 			return automateParam(param, time, value, curve === "decay" ? "target" : curve, curve === "decay" && duration || undefined);
 		},
-	
+
 		truncate: function(param, time) {
-			var events = paramMap.get(param);
-	
+			var events = param['audio-object-events'];
 			if (!events) { return; }
-	
+
 			truncateParamEvents(param, events, time);
 		},
 
