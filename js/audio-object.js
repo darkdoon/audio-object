@@ -164,7 +164,7 @@
 
 	function getParamEvents(param) {
 		var events = paramMap.get(param);
-
+console.log(AudioObject.isAudioParam(param));
 		if (!events) {
 			events = [[0, param.value]];
 			paramMap.set(param, events);
