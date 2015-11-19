@@ -58,8 +58,8 @@
 			// because it is not connected to audio destination.
 			audio.createGain().disconnect(audio.destination);
 			return false;
-		} catch (error) { 
-			return true;  
+		} catch (error) {
+			return true;
 		}
 	}
 
@@ -296,7 +296,7 @@
 
 		if (param ? !isAudioParam(param) : !data.set) {
 			throw new Error(
-				'AudioObject.defineAudioProperty requires EITHER data.param to be an AudioParam' + 
+				'AudioObject.defineAudioProperty requires EITHER data.param to be an AudioParam' +
 				'OR data.set to be defined as a function.'
 			);
 		}
@@ -322,7 +322,6 @@
 					'step' ;
 
 			if (param) {
-				automateParamEvents
 				automateParamEvents(param, events, time2, value2, curve, duration);
 			}
 			else {
