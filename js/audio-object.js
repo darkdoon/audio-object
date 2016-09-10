@@ -4,7 +4,7 @@
 	console.log('AudioObject');
 	console.log('http://github.com/soundio/audio-object');
 	//console.log('A wrapper for Web Audio sub-graphs');
-	console.log('——————————————————————————————————————');
+	console.log('______________________________________');
 })(window);
 
 (function(window) {
@@ -228,7 +228,7 @@
 
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
-
+console.log('automateParamEvents', events, time, value, curve, duration);
 		var n = events.length;
 
 		while (events[--n] && events[n][0] >= time);
@@ -256,6 +256,9 @@
 		var method = methods[curve];
 
 		// Automate the param
+
+console.log('AUTOMATE', value, time, duration)
+
 		param[method](value, time, duration);
 
 		// If the new event is at the end of the events list
@@ -531,7 +534,7 @@
 			time = curve === "linear" || curve === "exponential" ?
 				time + duration :
 				time ;
-
+	
 			return automateParam(param, time, value, curve === "decay" ? "target" : curve, curve === "decay" && duration || undefined);
 		},
 
