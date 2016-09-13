@@ -228,7 +228,7 @@
 
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
-console.log('automateParamEvents', events, time, value, curve, duration);
+//console.log('automateParamEvents', events, time, value, curve, duration);
 		var n = events.length;
 
 		while (events[--n] && events[n][0] >= time);
@@ -257,7 +257,7 @@ console.log('automateParamEvents', events, time, value, curve, duration);
 
 		// Automate the param
 
-console.log('AUTOMATE', value, time, duration)
+//console.log('AUTOMATE', value, time, duration)
 
 		param[method](value, time, duration);
 
@@ -494,6 +494,13 @@ console.log('AUTOMATE', value, time, duration)
 	}
 
 	assign(AudioObject.prototype, {
+		schedule: function() {
+			var n = -1;
+			var l = arguments.length;
+			while (++n < l) { scheduleEvent(this, arguments[n]); }
+			return this;
+		},
+
 		automate: function(name, value, time, curve, duration) {
 			var automators = automatorMap.get(this);
 
@@ -528,6 +535,63 @@ console.log('AUTOMATE', value, time, duration)
 
 		destroy: noop
 	});
+
+	function scheduleEvent(object, event) {
+		var param, value, curve;
+
+		//var events = getParamEvents(param);
+
+		var time = event[0];
+		var type = event[1];
+
+		if (type === "note") {
+			//console.log('AudioObject: schedule note ', event);
+			if (!object.start) { return; }
+			object.start(time, event[2], event[3]);
+			if (!object.stop)  { return; }
+			object.stop(time + (event[4] || 0));
+			return;
+		}
+
+		console.log('AudioObject: schedule event', event);
+
+		var automators = automatorMap.get(object);
+
+		if (!automators || !automators[name]) {
+			// Only properties that have been registered
+			// by defineAudioProperty() can be automated.
+			throw new Error('AudioObject: property "' + name + '" is not automatable.');
+		}
+
+		var name = event[2];
+		var value = event[3];
+		var curve = event[4];
+
+		// Swap exponential to- or from- 0 values for step
+		// curves, which is what they tend towards for low
+		// values. This does not deal with -ve values,
+		// however. It probably should.
+		if (curve === "exponential") {
+			if (value < minExponentialValue) {
+				curve = "step";
+			}
+		}
+
+		automators[name](value, time, curve);
+
+		var event = [time, value, curve];
+		var method = methods[curve];
+
+		// Automate the param
+
+console.log('AUTOMATE', value, time, duration)
+
+		param[method](value, time, duration);
+		events.push(event);
+	}
+
+
+
 
 	assign(AudioObject, {
 		automate: function(param, time, value, curve, duration) {
