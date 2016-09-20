@@ -553,6 +553,18 @@
 			return;
 		}
 
+		if (type === "noteon") {
+			if (!object.start) { return; }
+			object.start(time, event[2], event[3]);
+			return;
+		}
+
+		if (type === "noteoff") {
+			if (!object.start) { return; }
+			object.stop(time, event[2], event[3]);
+			return;
+		}
+
 		console.log('AudioObject: schedule event', event);
 
 		var automators = automatorMap.get(object);
@@ -563,7 +575,7 @@
 			throw new Error('AudioObject: property "' + name + '" is not automatable.');
 		}
 
-		var name = event[2];
+		var name  = event[2];
 		var value = event[3];
 		var curve = event[4];
 
