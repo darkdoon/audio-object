@@ -565,19 +565,20 @@
 			return;
 		}
 
-		console.log('AudioObject: schedule event', event);
+		//console.log('AudioObject: schedule event', event);
 
 		var automators = automatorMap.get(object);
+		var name  = event[2];
 
 		if (!automators || !automators[name]) {
 			// Only properties that have been registered
 			// by defineAudioProperty() can be automated.
 			// Ignore.
+			console.log('AudioObject: no param "' + name + '"', event);
 			return;
 			//throw new Error('AudioObject: property "' + name + '" is not automatable.');
 		}
 
-		var name  = event[2];
 		var value = event[3];
 		var curve = event[4];
 
@@ -593,15 +594,15 @@
 
 		automators[name](value, time, curve);
 
-		var event = [time, value, curve];
-		var method = methods[curve];
+//		var event = [time, value, curve];
+//		var method = methods[curve];
 
 		// Automate the param
 
-console.log('AUTOMATE', value, time, duration)
+//console.log('AUTOMATE', value, time, curve, param)
 
-		param[method](value, time, duration);
-		events.push(event);
+//		param[method](value, time, 0);
+//		events.push(event);
 	}
 
 
