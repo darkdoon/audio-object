@@ -75,22 +75,38 @@
 
 		assign(this, {
 			start: function(time, number) {
-				var node    = audio.createOscillator();
+				time = time || audio.currentTime;
+
+				var node     = audio.createOscillator();
+				var envelope = audio.createGain();
+
+				envelope.gain.setValueAtTime(0, time);
+				envelope.gain.linearRampToValueAtTime(1, time + 0.004);
+				envelope.connect(output);
+
 				node.detune.value = options.detune;
 				node.frequency.value = number ?
 					numberToFrequency(number) :
 					options.frequency ;
 				node.type = options.waveform || 'sine';
-				node.connect(output);
+				node.connect(envelope);
 				node.start(time);
-				oscillators.push(node);
+				
+				oscillators.push([node, envelope]);
 				return this;
 			},
 
-			stop: function() {
-				var node = oscillators.shift();
-				if (!node) { return; }
-				node.stop.apply(node, arguments);
+			stop: function(time) {
+				var nodes = oscillators.shift();
+				if (!nodes) { return; }
+
+				time = time || audio.currentTime;
+
+				var oscillator = nodes[0];
+				var envelope   = nodes[1];
+
+				envelope.gain.linearRampToValueAtTime(0, time + 0.006);
+				oscillator.stop(time + 0.012);
 				return this;
 			},
 
