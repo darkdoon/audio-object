@@ -572,7 +572,9 @@
 		if (!automators || !automators[name]) {
 			// Only properties that have been registered
 			// by defineAudioProperty() can be automated.
-			throw new Error('AudioObject: property "' + name + '" is not automatable.');
+			// Ignore.
+			return;
+			//throw new Error('AudioObject: property "' + name + '" is not automatable.');
 		}
 
 		var name  = event[2];
