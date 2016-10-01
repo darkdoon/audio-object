@@ -12,24 +12,6 @@
 		"sample-map": "Gretsch Kit"
 	};
 
-
-	// From Soundstage -----------------------
-
-	var bufferRequests = {};
-
-	function fetchBuffer(audio, url) {
-		return bufferRequests[url] || (bufferRequests[url] = new Promise(function(accept, reject) {
-			var request = new XMLHttpRequest();
-			request.open('GET', url, true);
-			request.responseType = 'arraybuffer';
-
-			request.onload = function() {
-				audio.decodeAudioData(request.response, accept, reject);
-			}
-
-			request.send();
-		}));
-	}
 	
 	// ------------------------------------
 
@@ -117,6 +99,30 @@
 		}
 	}
 
+
+	// Note
+
+	function Note(audio, number, destination, options) {
+		var oscillator = audio.createOscillator();
+		var envelope   = audio.createGain();
+
+		this.nodes = [oscillator, envelope];
+
+	}
+
+	assign(Note.prototype, {
+		start: function(time) {
+			
+		},
+
+		stop: function(time) {
+			
+		}
+	});
+
+
+	// Sampler
+
 	function Sampler(audio, settings, clock, presets) {
 		var options = assign({}, defaults, settings);
 		var output = audio.createGain();
@@ -132,7 +138,8 @@
 		}
 
 		function fetchBufferN(n, url) {
-			fetchBuffer(audio, url)
+			AudioObject
+			.fetchBuffer(audio, url)
 			.then(function(buffer) {
 				buffers[n] = buffer;
 				updateLoaded();

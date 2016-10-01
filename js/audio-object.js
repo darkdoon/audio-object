@@ -639,7 +639,19 @@
 		isAudioContext: isAudioContext,
 		isAudioNode: isAudioNode,
 		isAudioParam: isAudioParam,
-		isAudioObject: isAudioObject
+		isAudioObject: isAudioObject,
+		
+		fetchBuffer: Fn.curry(function fetchBuffer(audio, url) {
+			return new Promise(function(accept, reject) {
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.responseType = 'arraybuffer';
+				request.onload = function() {
+					audio.decodeAudioData(request.response, accept, reject);
+				};
+				request.send();
+			}));
+		}
 	});
 
 	Object.defineProperty(AudioObject, 'minExponentialValue', {
