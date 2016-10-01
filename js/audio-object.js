@@ -560,8 +560,8 @@
 		}
 
 		if (type === "noteoff") {
-			if (!object.start) { return; }
-			object.stop(time, event[2], event[3]);
+			if (!object.stop) { return; }
+			object.stop(time, event[2]);
 			return;
 		}
 

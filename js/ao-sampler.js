@@ -80,13 +80,13 @@
 		// value exponentially according to the decay. If we set the timeout to
 		// decay x 11 we can be pretty sure the value is down at least -96dB.
 		// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-		var time = Math.ceil(decay * 11 * 1000);
+		//var time = Math.ceil(decay * 11 * 1000);
 
-		setTimeout(function() {
-			node.stop();
-			node.disconnect();
-			gain.disconnect();
-		}, time);
+		//setTimeout(function() {
+		//	node.stop();
+		//	node.disconnect();
+		//	gain.disconnect();
+		//}, time);
 	}
 
 	function dampNote(time, packets) {
