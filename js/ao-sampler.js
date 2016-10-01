@@ -55,25 +55,9 @@
 		return noteFactor * veloFactor * (region.gain || 1);
 	}
 
-	function dampRegion(time, decay, node, gain) {
-		gain.gain.setTargetAtTime(0, time, decay);
-
-		// Stop playing and disconnect. The setTargetAtTime method reduces the
-		// value exponentially according to the decay. If we set the timeout to
-		// decay x 11 we can be pretty sure the value is down at least -96dB.
-		// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-		//var time = Math.ceil(decay * 11 * 1000);
-
-		//setTimeout(function() {
-		//	node.stop();
-		//	node.disconnect();
-		//	gain.disconnect();
-		//}, time);
-	}
-
 	function dampNote(time, packets) {
 		var n = packets.length;
-		var packet;
+		var packet, note;
 
 		while (n--) {
 			packet = packets[n];
@@ -82,41 +66,60 @@
 			// treat sample as a one-shot sound. ie, don't damp it.
 			if (!isDefined(packet[0].dampDecay)) { continue; }
 
-			dampRegion(time, packet[0].dampDecay, packet[1], packet[2]);
+			note = packet[1];
+			note.stop(time, packet[0].dampDecay);
 
 			// This packet has been damped, so remove it.
-			packets.splice(n, 1);
+			//packets.splice(n, 1);
 		}
 	}
 
 	function muteNote(time, packets, muteDecay) {
 		var n = packets.length;
-		var packet;
+		var packet, note;
 
 		while (n--) {
 			packet = packets[n];
-			dampRegion(time, muteDecay, packet[1], packet[2]);
+			note = packet[1];
+			note.stop(time, muteDecay);
 		}
 	}
 
 
 	// Note
 
-	function Note(audio, number, destination, options) {
-		var oscillator = audio.createOscillator();
-		var envelope   = audio.createGain();
+	function Note(audio, number, buffer, loop, destination, options) {
+		var source = audio.createBufferSource();
+		var gain = audio.createGain();
 
-		this.nodes = [oscillator, envelope];
+		this.nodes = [source, gain];
 
+		source.buffer = buffer;
+		source.loop = loop;
+		source.connect(gain);
+		gain.connect(destination);
 	}
 
 	assign(Note.prototype, {
-		start: function(time) {
-			
+		start: function(time, gain) {
+			this.nodes[0].start(time);
+			this.nodes[1].gain.setValueAtTime(gain, time);
 		},
 
-		stop: function(time) {
-			
+		stop: function(time, decay) {
+			// setTargetAtTime reduces the value exponentially according to the
+			// decay. If we set the timeout to decay x 11 we can be pretty sure
+			// the value is down at least -96dB.
+			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+
+			this.nodes[0].stop(time + Math.ceil(decay * 11));
+			this.nodes[1].gain.setTargetAtTime(0, time, decay);
+
+			// Do we need to discnnect nodes or are they thrwon away automatically?
+			//setTimeout(function() {
+			//	this.nodes[0].disconnect();
+			//	this.nodes[1].disconnect();
+			//}, Math.ceil(decay * 11));
 		}
 	});
 
@@ -171,13 +174,11 @@
 		object['sample-map'] = options['sample-map'];
 
 		object.start = function(time, number, velocity) {
-			if (velocity === 0) {
-				return;
-			}
+			time = time || audio.currentTime;
 
-			if (!notes[number]) {
-				notes[number] = [];
-			}
+			if (velocity === 0) { return; }
+
+			if (!notes[number]) { notes[number] = []; }
 
 			// Store the currently playing nodes until we know
 			// how quickly they should be muted.
@@ -194,11 +195,11 @@
 				buffer = buffers[n];
 
 				if (!buffer) {
-					console.log('Soundstage sampler: No buffer for region', n);
+					console.log('Soundstage sampler: No buffer for region', n, region.url);
 					continue;
 				}
 
-				regionGain = rangeGain(region, number, velocity);
+				regionGain  = rangeGain(region, number, velocity);
 				sensitivity = isDefined(region.velocitySensitivity) ? region.velocitySensitivity : 1 ;
 
 				// If the regionGain is low don't play the region
@@ -208,19 +209,12 @@
 				// If sensitivity is 1, we get gain range 0-1
 				velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
 
-				gain = audio.createGain();
-				gain.gain.setValueAtTime(regionGain * velocityGain, audio.currentTime);
-				gain.connect(output);
-
-				node = audio.createBufferSource();
-				node.buffer = buffer;
-				node.loop = region.loop;
-				node.connect(gain);
-				node.start(time);
+				var note = new Note(audio, number, buffer, region.loop, output, options);
+				note.start(time, regionGain * velocityGain);
 
 				// Store the region and associated nodes, that we may
 				// dispose of them elegantly later.
-				notes[number].push([region, node, gain]);
+				notes[number].push([region, note]);
 
 				if (isDefined(region.muteDecay) && region.muteDecay < minMute) {
 					minMute = region.muteDecay;
@@ -229,15 +223,14 @@
 
 			if (minMute < Infinity) {
 				// Mute nodes currently playing at this number
-				muteNote(audio.currentTime, currentNodes, minMute);
+				muteNote(time, currentNodes, minMute);
 			}
 		};
 
 		object.stop = function(time, number) {
-			var array = notes[number];
-
-			if (!array) { return; }
-			dampNote(time || audio.currentTime, array);
+			var packets = notes[number];
+			if (!packets) { return; }
+			dampNote(time || audio.currentTime, packets);
 		};
 
 		object.destroy = function() {

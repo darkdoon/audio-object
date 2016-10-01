@@ -650,8 +650,8 @@
 					audio.decodeAudioData(request.response, accept, reject);
 				};
 				request.send();
-			}));
-		}
+			});
+		})
 	});
 
 	Object.defineProperty(AudioObject, 'minExponentialValue', {
