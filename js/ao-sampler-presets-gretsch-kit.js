@@ -1,38 +1,28 @@
 (function(window) {
 	"use strict";
 
-	var presets = Collection([], { index: 'name' });
+	var presets = AudioObject.presets || (AudioObject.presets = Collection([], { index: 'name' }));
+
+	// Gretsch Kit by @stephband and @hughlawrence
+	// http://stephen.band/gretsch-kit.html
+
+	// A region looks like this:
+	// 
+	// {
+	//   url: 'audio.wav',
+	//   noteRange: [minLimit, minFade, maxFade, maxLimit],     // All numbers as MIDI note numbers
+	//   velocityRange: [minLimit, minFade, maxFade, maxLimit], // All numbers in the range 0-1
+	//   velocitySensitivity: // 0-1
+	//   gain:                // 0-1
+	//   muteDecay:           // seconds
+	// }
+
+	// Note: URLs are temporary! They will change.
 
 	presets.add({
 		type: 'sample-map',
 		version: 1,
 		name: 'Gretsch Kit',
-
-		// A region looks like this:
-		// 
-		// {
-		//   noteRange: [minLimit, minFade, maxFade, maxLimit],     // All numbers as MIDI note numbers
-		//   velocityRange: [minLimit, minFade, maxFade, maxLimit], // All numbers in the range 0-1
-		//   url: 'audio.wav',
-		// }
-
-//		data: [{
-//			url: 'http://localhost/sound.io/soundio/static/presentations/2015/swissjs/audio/sine-sweep-gain-change.wav',
-//			noteRange: [16],
-//			velocityRange: [0, 1],
-//			velocitySensitivity: 0,
-//			gain: 0.25,
-//			muteDecay: 0.08
-//		}, {
-//			url: 'http://localhost/sound.io/soundio/static/presentations/2015/swissjs/audio/sine-sweep-fade-change.wav',
-//			noteRange: [17],
-//			velocityRange: [0, 1],
-//			velocitySensitivity: 0,
-//			gain: 0.25,
-//			muteDecay: 0.08
-//		}, 
-
-		// Note: These URLs are temporary! They will change.
 
 		data: [{
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-01.wav',
@@ -342,6 +332,4 @@
 			muteDecay: 0.3333
 		}]
 	});
-
-	AudioObject.presets = presets;
 })(window);

@@ -12,7 +12,13 @@
 
 	if (!window.AudioContext) { return; }
 
+	// Import
+	
+	var Fn     = window.Fn;
 	var assign = Object.assign;
+
+
+	// Define
 
 	var automatorMap = new WeakMap();
 
@@ -28,10 +34,20 @@
 	var minExponentialValue = 1.4013e-45;
 
 
-	function noop() {}
+	// Functions
 
-	function isDefined(value) {
-		return value !== undefined && value !== null;
+	var noop      = Fn.noop;
+	var isDefined = Fn.isDefined;
+
+	function fetch(url) {
+		return new Promise(function(accept, reject) {
+			var request = new XMLHttpRequest();
+			request.open('GET', url, true);
+			request.responseType = 'arraybuffer';
+			request.onload = function() { accept(request.response); };
+			request.onerror = function() { reject(request.response); };
+			request.send();
+		});
 	}
 
 	function isAudioContext(object) {
@@ -50,6 +66,20 @@
 		return AudioObject.prototype.isPrototypeOf(object);
 	}
 
+	function registerAutomator(object, name, fn) {
+		var automators = automatorMap.get(object);
+
+		if (!automators) {
+			automators = {};
+			automatorMap.set(object, automators);
+		}
+
+		automators[name] = fn;
+	}
+
+
+	// Feature tests
+
 	function testDisconnectParameters() {
 		var audio = new AudioContext();
 
@@ -61,17 +91,6 @@
 		} catch (error) {
 			return true;
 		}
-	}
-
-	function registerAutomator(object, name, fn) {
-		var automators = automatorMap.get(object);
-
-		if (!automators) {
-			automators = {};
-			automatorMap.set(object, automators);
-		}
-
-		automators[name] = fn;
 	}
 
 
@@ -605,9 +624,6 @@
 //		events.push(event);
 	}
 
-
-
-
 	assign(AudioObject, {
 		automate: function(param, time, value, curve, duration) {
 			time = curve === "linear" || curve === "exponential" ?
@@ -624,32 +640,28 @@
 			truncateParamEvents(param, events, time);
 		},
 
-		features: {
-			disconnectParameters: testDisconnectParameters()
-		},
-
 		automate2: automateParam,
 		valueAtTime: getParamValueAtTime,
 		defineInputs: defineInputs,
 		defineOutputs: defineOutputs,
 		defineAudioProperty: defineAudioProperty,
 		defineAudioProperties: defineAudioProperties,
-		getInput: getInput,
-		getOutput: getOutput,
+		getInput:       getInput,
+		getOutput:      getOutput,
 		isAudioContext: isAudioContext,
-		isAudioNode: isAudioNode,
-		isAudioParam: isAudioParam,
-		isAudioObject: isAudioObject,
-		
-		fetchBuffer: Fn.curry(function fetchBuffer(audio, url) {
-			return new Promise(function(accept, reject) {
-				var request = new XMLHttpRequest();
-				request.open('GET', url, true);
-				request.responseType = 'arraybuffer';
-				request.onload = function() {
-					audio.decodeAudioData(request.response, accept, reject);
-				};
-				request.send();
+		isAudioNode:    isAudioNode,
+		isAudioParam:   isAudioParam,
+		isAudioObject:  isAudioObject,
+
+		features: {
+			disconnectParameters: testDisconnectParameters()
+		},
+
+		fetchBuffer: Fn.cacheCurry(function fetchBuffer(audio, url) {
+			return fetch(url).then(function(response) {
+				return new Promise(function(accept, reject) {
+					audio.decodeAudioData(response, accept, reject);
+				});
 			});
 		})
 	});
