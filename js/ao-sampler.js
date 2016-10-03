@@ -96,112 +96,50 @@
 
 	// Note
 
-//	function Note(audio, buffer, loop, destination, options) {
-//		var source = audio.createBufferSource();
-//		var gain = audio.createGain();
-//
-//		this.nodes = [source, gain];
-//
-//		source.buffer = buffer;
-//		source.loop = loop;
-//		source.connect(gain);
-//		gain.connect(destination);
-//	}
-//
-//	assign(Note.prototype, {
-//		start: function(time, gain, detune) {
-//			// WebAudio uses cents for detune where we use semitones.
-//			// Bug: Chrome does not seem to support scheduling for detune...
-//			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
-//			this.nodes[0].detune.value = detune * 100;
-//			this.nodes[0].start(time);
-//			this.nodes[1].gain.value = gain;
-//		},
-//
-//		stop: function(time, decay) {
-//			// setTargetAtTime reduces the value exponentially according to the
-//			// decay. If we set the timeout to decay x 11 we can be pretty sure
-//			// the value is down at least -96dB.
-//			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-//
-//			this.nodes[0].stop(time + Math.ceil(decay * 11));
-//			this.nodes[1].gain.setTargetAtTime(0, time, decay);
-//
-//			// Do we need to disconnect nodes or are they thrown away automatically?
-//			//setTimeout(function() {
-//			//	this.nodes[0].disconnect();
-//			//	this.nodes[1].disconnect();
-//			//}, Math.ceil(decay * 11));
-//		}
-//	});
+	function Note(audio, buffer, loop, destination, options) {
+		this.nodes = [undefined, audio.createGain()];
+		this.nodes[1].connect(destination);
+		Note.reset.apply(this, arguments);
+	}
 
-//	var Note = Fn.pool(10, function create() {
-//		
-//	}, function update() {
-//		
-//	}, {
-//		
-//	});
+	Note.reset = function reset(note) {
+		var nodes = this.nodes;
+		nodes[0] = audio.createBufferSource();
+		nodes[0].buffer = buffer;
+		nodes[0].loop = loop;
+		nodes[0].connect(nodes[1]);
+	};
 
-	var Note = (function() {
-		var max  = 1;
-		var pool = [];
+	assign(Note.prototype, {
+		start: function(time, gain, detune) {
+			// WebAudio uses cents for detune where we use semitones.
+			// Bug: Chrome does not seem to support scheduling for detune...
+			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
+			this.nodes[0].detune.value = detune * 100;
+			this.nodes[0].start(time);
+			this.nodes[1].gain.value = gain;
+		},
 
-		var prototype = {
-			start: function(time, gain, detune) {
-				// WebAudio uses cents for detune where we use semitones.
-				// Bug: Chrome does not seem to support scheduling for detune...
-				//this.nodes[0].detune.setValueAtTime(detune * 100, time);
-				this.nodes[0].detune.value = detune * 100;
-				this.nodes[0].start(time);
-				this.nodes[1].gain.value = gain;
-			},
-		
-			stop: function(time, decay) {
-				// setTargetAtTime reduces the value exponentially according to the
-				// decay. If we set the timeout to decay x 11 we can be pretty sure
-				// the value is down at least -96dB.
-				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-		
-				this.nodes[0].stop(time + Math.ceil(decay * 11));
-				this.nodes[1].gain.setTargetAtTime(0, time, decay);
-		
-				// Do we need to disconnect nodes or are they thrown away automatically?
-				//setTimeout(function() {
-				//	this.nodes[0].disconnect();
-				//	this.nodes[1].disconnect();
-				//}, Math.ceil(decay * 11));
-			}
-		};
+		stop: function(time, decay) {
+			// setTargetAtTime reduces the value exponentially according to the
+			// decay. If we set the timeout to decay x 11 we can be pretty sure
+			// the value is down at least -96dB.
+			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
 
-		var n = 0;
+			this.nodes[0].stop(time + Math.ceil(decay * 11));
+			this.nodes[1].gain.setTargetAtTime(0, time, decay);
 
-		function next() {
-			return ++n > max ? (n = 0) : n ;
+			// Do we need to disconnect nodes or are they thrown away automatically?
+			//setTimeout(function() {
+			//	this.nodes[0].disconnect();
+			//	this.nodes[1].disconnect();
+			//}, Math.ceil(decay * 11));
 		}
+	});
 
-		function create(destination, buffer, loop) {
-			var note = Object.create(prototype);
-			note.nodes = [undefined, audio.createGain()];
-			note.nodes[1].connect(destination);
-			return update(note, buffer, loop);
-		}
-
-		function update(note, buffer, loop) {
-			var nodes = note.nodes;
-			nodes[0] = audio.createBufferSource();
-			nodes[0].buffer = buffer;
-			nodes[0].loop = loop;
-			nodes[0].connect(nodes[1]);
-			return note;
-		}
-
-		return function Note(audio, buffer, loop, destination, options) {
-			return pool.length >= max ?
-				update(pool[next()], buffer, loop) :
-				create(destination, buffer, loop) ;
-		};
-	})();
+	var Voice = Fn.pool(Note, function isActive(note) {
+		return true;
+	});
 
 
 	// Sampler
@@ -290,7 +228,7 @@
 				velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
 				regionDetune = rangeDetune(region, number);
 
-				note = new Note(audio, buffer, region.loop, output, options);
+				note = new Voice(audio, buffer, region.loop, output, options);
 				note.start(time, regionGain * velocityGain, regionDetune);
 
 				// Store the region and associated nodes, that we may
