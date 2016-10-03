@@ -25,7 +25,7 @@
 	}
 
 	function rangeGain(region, note, velo) {
-		var noteRange       = region.noteRange || [0, 127];
+		var noteRange       = region.noteRange || [0, 49, 127];
 		var veloRange       = region.velocityRange || [0, 1];
 		var noteRangeLength = noteRange.length;
 		var veloRangeLength = veloRange.length;
@@ -34,7 +34,7 @@
 		if (note < noteRange[0] || noteRange[noteRangeLength - 1] < note) { return 0; }
 		if (velo < veloRange[0] || veloRange[veloRangeLength - 1] < velo) { return 0; }
 
-		var noteFactor = noteRangeLength < 3 ? 1 :
+		var noteFactor = noteRangeLength < 4 ? 1 :
 				note < noteRange[1] ?
 					ratio(note, noteRange[0], noteRange[1]) :
 				noteRange[noteRangeLength - 2] < note ?
@@ -51,8 +51,16 @@
 		// return noteFactor squared x veloFactor squared, in order to give
 		// us equal-power fade curves (I think). No! Wait, no! If the two
 		// sounds are correlated, then we want overall amplitude to remain
-		// constant, so don't square them. I'm not sure :(
+		// constant, so the crossfade should be linear. I'm not sure :(
 		return noteFactor * veloFactor * (region.gain || 1);
+	}
+
+	function rangeDetune(region, number) {
+		var range  = region.noteRange || [0, 127];
+		var follow = isDefined(region.pitchFollow) ? region.pitchFollow : 1;
+		var l      = range.length;
+		var center = range[Math.floor((l - 1) / 2)];
+		return number - center;
 	}
 
 	function dampNote(time, packets) {
@@ -64,10 +72,10 @@
 
 			// If region's dampDecay is not defined, or if it is set to 0,
 			// treat sample as a one-shot sound. ie, don't damp it.
-			if (!isDefined(packet[0].dampDecay)) { continue; }
+			if (!isDefined(packet[0].decay)) { continue; }
 
 			note = packet[1];
-			note.stop(time, packet[0].dampDecay);
+			note.stop(time, packet[0].decay);
 
 			// This packet has been damped, so remove it.
 			//packets.splice(n, 1);
@@ -88,40 +96,112 @@
 
 	// Note
 
-	function Note(audio, number, buffer, loop, destination, options) {
-		var source = audio.createBufferSource();
-		var gain = audio.createGain();
+//	function Note(audio, buffer, loop, destination, options) {
+//		var source = audio.createBufferSource();
+//		var gain = audio.createGain();
+//
+//		this.nodes = [source, gain];
+//
+//		source.buffer = buffer;
+//		source.loop = loop;
+//		source.connect(gain);
+//		gain.connect(destination);
+//	}
+//
+//	assign(Note.prototype, {
+//		start: function(time, gain, detune) {
+//			// WebAudio uses cents for detune where we use semitones.
+//			// Bug: Chrome does not seem to support scheduling for detune...
+//			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
+//			this.nodes[0].detune.value = detune * 100;
+//			this.nodes[0].start(time);
+//			this.nodes[1].gain.value = gain;
+//		},
+//
+//		stop: function(time, decay) {
+//			// setTargetAtTime reduces the value exponentially according to the
+//			// decay. If we set the timeout to decay x 11 we can be pretty sure
+//			// the value is down at least -96dB.
+//			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+//
+//			this.nodes[0].stop(time + Math.ceil(decay * 11));
+//			this.nodes[1].gain.setTargetAtTime(0, time, decay);
+//
+//			// Do we need to disconnect nodes or are they thrown away automatically?
+//			//setTimeout(function() {
+//			//	this.nodes[0].disconnect();
+//			//	this.nodes[1].disconnect();
+//			//}, Math.ceil(decay * 11));
+//		}
+//	});
 
-		this.nodes = [source, gain];
+//	var Note = Fn.pool(10, function create() {
+//		
+//	}, function update() {
+//		
+//	}, {
+//		
+//	});
 
-		source.buffer = buffer;
-		source.loop = loop;
-		source.connect(gain);
-		gain.connect(destination);
-	}
+	var Note = (function() {
+		var max  = 1;
+		var pool = [];
 
-	assign(Note.prototype, {
-		start: function(time, gain) {
-			this.nodes[0].start(time);
-			this.nodes[1].gain.setValueAtTime(gain, time);
-		},
+		var prototype = {
+			start: function(time, gain, detune) {
+				// WebAudio uses cents for detune where we use semitones.
+				// Bug: Chrome does not seem to support scheduling for detune...
+				//this.nodes[0].detune.setValueAtTime(detune * 100, time);
+				this.nodes[0].detune.value = detune * 100;
+				this.nodes[0].start(time);
+				this.nodes[1].gain.value = gain;
+			},
+		
+			stop: function(time, decay) {
+				// setTargetAtTime reduces the value exponentially according to the
+				// decay. If we set the timeout to decay x 11 we can be pretty sure
+				// the value is down at least -96dB.
+				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+		
+				this.nodes[0].stop(time + Math.ceil(decay * 11));
+				this.nodes[1].gain.setTargetAtTime(0, time, decay);
+		
+				// Do we need to disconnect nodes or are they thrown away automatically?
+				//setTimeout(function() {
+				//	this.nodes[0].disconnect();
+				//	this.nodes[1].disconnect();
+				//}, Math.ceil(decay * 11));
+			}
+		};
 
-		stop: function(time, decay) {
-			// setTargetAtTime reduces the value exponentially according to the
-			// decay. If we set the timeout to decay x 11 we can be pretty sure
-			// the value is down at least -96dB.
-			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+		var n = 0;
 
-			this.nodes[0].stop(time + Math.ceil(decay * 11));
-			this.nodes[1].gain.setTargetAtTime(0, time, decay);
-
-			// Do we need to discnnect nodes or are they thrwon away automatically?
-			//setTimeout(function() {
-			//	this.nodes[0].disconnect();
-			//	this.nodes[1].disconnect();
-			//}, Math.ceil(decay * 11));
+		function next() {
+			return ++n > max ? (n = 0) : n ;
 		}
-	});
+
+		function create(destination, buffer, loop) {
+			var note = Object.create(prototype);
+			note.nodes = [undefined, audio.createGain()];
+			note.nodes[1].connect(destination);
+			return update(note, buffer, loop);
+		}
+
+		function update(note, buffer, loop) {
+			var nodes = note.nodes;
+			nodes[0] = audio.createBufferSource();
+			nodes[0].buffer = buffer;
+			nodes[0].loop = loop;
+			nodes[0].connect(nodes[1]);
+			return note;
+		}
+
+		return function Note(audio, buffer, loop, destination, options) {
+			return pool.length >= max ?
+				update(pool[next()], buffer, loop) :
+				create(destination, buffer, loop) ;
+		};
+	})();
 
 
 	// Sampler
@@ -185,7 +265,7 @@
 			var currentNodes = notes[number].slice();
 			var n = regions.length;
 			var minMute = Infinity;
-			var region, regionGain, buffer, node, gain, sensitivity, velocityGain, muteDecay;
+			var region, regionGain, regionDetune, buffer, note, sensitivity, velocityGain, muteDecay;
 
 			// Empty the array ready for the new nodes
 			notes[number].length = 0;
@@ -208,9 +288,10 @@
 				// If sensitivity is 0, we get gain 1
 				// If sensitivity is 1, we get gain range 0-1
 				velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
+				regionDetune = rangeDetune(region, number);
 
-				var note = new Note(audio, number, buffer, region.loop, output, options);
-				note.start(time, regionGain * velocityGain);
+				note = new Note(audio, buffer, region.loop, output, options);
+				note.start(time, regionGain * velocityGain, regionDetune);
 
 				// Store the region and associated nodes, that we may
 				// dispose of them elegantly later.

@@ -35,7 +35,7 @@
 				i = -1;
 				while (++i < names.length) {
 					data.push({
-						url: 'http://localhost/sound.io/soundio/static/audio/fender-rhodes-mark-ii/samples/corsica-s-cs-rhodes-mark-ii-' + names[i] + o + '.aif',
+						url: 'http://localhost/sound.io/soundio/static/audio/fender-rhodes-mark-ii/samples/corsica-s-cs-rhodes-mark-ii-' + names[i] + o + '.wav',
 						noteRange: [n++],
 						velocityRange: [0, 1],
 						velocitySensitivity: 1,

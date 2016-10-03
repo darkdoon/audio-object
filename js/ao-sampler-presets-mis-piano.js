@@ -24,51 +24,138 @@
 		version: '0.1',
 		name: 'MIS Piano',
 
-		data: [{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C1.aiff',
-			noteRange: [24],
-			velocityRange: [0/3, 1/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C1.aiff',
-			noteRange: [24],
-			velocityRange: [1/3, 2/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C1.aiff',
-			noteRange: [24],
-			velocityRange: [2/3, 3/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
-		}, 
-
+		data: [
 
 		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C4.aiff',
-			noteRange: [60],
-			velocityRange: [0/3, 1/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C2.wav',
+			noteRange: [30, 36, 42],
+			velocityRange: [0, 0, 2/12, 6/12],
+			velocitySensitivity: 0.5,
+			gain: 6,
+			muteDecay: 0.2,
+			decay: 0.08
 		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C4.aiff',
-			noteRange: [60],
-			velocityRange: [1/3, 2/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C2.wav',
+			noteRange: [30, 36, 42],
+			velocityRange: [2/12, 6/12, 7/12, 11/12],
+			velocitySensitivity: 0.5,
+			gain: 12/7,
+			muteDecay: 0.2,
+			decay: 0.08
 		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C4.aiff',
-			noteRange: [60],
-			velocityRange: [2/3, 3/3],
-			velocitySensitivity: 0.25,
-			gain: 1.5,
-			muteDecay: 0.08
-		}]
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C2.wav',
+			noteRange: [30, 36, 42],
+			velocityRange: [7/12, 11/12, 1, 1],
+			velocitySensitivity: 0.5,
+			gain: 1,
+			muteDecay: 0.2,
+			decay: 0.08
+		},
+		
+		{
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C3.wav',
+			noteRange: [42, 48, 54],
+			velocityRange: [0, 0, 2/12, 6/12],
+			velocitySensitivity: 0.5,
+			gain: 6,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C3.wav',
+			noteRange: [42, 48, 54],
+			velocityRange: [2/12, 6/12, 7/12, 11/12],
+			velocitySensitivity: 0.5,
+			gain: 12/7,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C3.wav',
+			noteRange: [42, 48, 54],
+			velocityRange: [7/12, 11/12, 1, 1],
+			velocitySensitivity: 0.5,
+			gain: 1,
+			muteDecay: 0.2,
+			decay: 0.08
+		},
+
+		{
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C4.wav',
+			noteRange: [54, 60, 66],
+			velocityRange: [0, 0, 2/12, 6/12],
+			velocitySensitivity: 0.5,
+			gain: 6,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C4.wav',
+			noteRange: [54, 60, 66],
+			velocityRange: [2/12, 6/12, 7/12, 11/12],
+			velocitySensitivity: 0.5,
+			gain: 12/7,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C4.wav',
+			noteRange: [54, 60, 66],
+			velocityRange: [7/12, 11/12, 1, 1],
+			velocitySensitivity: 0.5,
+			gain: 1,
+			muteDecay: 0.2,
+			decay: 0.08
+		},
+
+		{
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C5.wav',
+			noteRange: [66, 72, 78],
+			velocityRange: [0, 0, 2/12, 6/12],
+			velocitySensitivity: 0.5,
+			gain: 6,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C5.wav',
+			noteRange: [66, 72, 78],
+			velocityRange: [2/12, 6/12, 7/12, 11/12],
+			velocitySensitivity: 0.5,
+			gain: 12/7,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C5.wav',
+			noteRange: [66, 72, 78],
+			velocityRange: [7/12, 11/12, 1, 1],
+			velocitySensitivity: 0.5,
+			gain: 1,
+			muteDecay: 0.2,
+			decay: 0.08
+		},
+
+		{
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C6.wav',
+			noteRange: [78, 84, 90],
+			velocityRange: [0, 0, 2/12, 6/12],
+			velocitySensitivity: 0.5,
+			gain: 6,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C6.wav',
+			noteRange: [78, 84, 90],
+			velocityRange: [2/12, 6/12, 7/12, 11/12],
+			velocitySensitivity: 0.5,
+			gain: 12/7,
+			muteDecay: 0.2,
+			decay: 0.08
+		}, {
+			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C6.wav',
+			noteRange: [78, 84, 90],
+			velocityRange: [7/12, 11/12, 1, 1],
+			velocitySensitivity: 0.5,
+			gain: 1,
+			muteDecay: 0.2,
+			decay: 0.08
+		}
+
+		]
 	});
 })(window);

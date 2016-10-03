@@ -663,6 +663,22 @@
 					audio.decodeAudioData(response, accept, reject);
 				});
 			});
+		}),
+
+		UnityNode: Fn.cache(function UnityNode(audio) {
+			var oscillator = audio.createOscillator();
+			var waveshaper = audio.createWaveShaper();
+		
+			var curve = new Float32Array(2);
+			curve[0] = curve[1] = 1;
+		
+			oscillator.type = 'square';
+			oscillator.connect(waveshaper);
+			oscillator.frequency.value = 100;
+			waveshaper.curve = curve;
+			oscillator.start();
+		
+			return waveshaper;
 		})
 	});
 
