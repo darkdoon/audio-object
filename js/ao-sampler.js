@@ -15,7 +15,6 @@
 	
 	// ------------------------------------
 
-
 	function isDefined(val) {
 		return val !== undefined && val !== null;
 	}
@@ -94,30 +93,96 @@
 	}
 
 
-	// Note
+	// Voice
 
-	function Note(audio, buffer, loop, destination, options) {
-		this.nodes = [undefined, audio.createGain()];
-		this.nodes[1].connect(destination);
-		Note.reset.apply(this, arguments);
-	}
+//	function Note(audio, buffer, loop, destination, options) {
+//		this.audio = audio;
+//		this.nodes = [undefined, audio.createGain()];
+//		this.nodes[1].connect(destination);
+//		Note.reset.apply(this, arguments);
+//	}
+//
+//	assign(Note, {
+//		reset: function reset(audio, buffer, loop, destination, options) {
+//			var nodes = this.nodes;
+//			nodes[0] = audio.createBufferSource();
+//			nodes[0].buffer = buffer;
+//			nodes[0].loop = loop;
+//			nodes[0].connect(nodes[1]);
+//			this.startTime = Infinity;
+//			this.stopTime = Infinity;
+//		}
+//	});
+//
+//	assign(Note.prototype, {
+//		start: function(time, gain, detune) {
+//			// WebAudio uses cents for detune where we use semitones.
+//			// Bug: Chrome does not seem to support scheduling for detune...
+//			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
+//			this.nodes[0].detune.value = detune * 100;
+//			this.nodes[0].start(time);
+//			this.nodes[1].gain.setValueAtTime(gain, time);
+//			this.startTime = time;
+//		},
+//
+//		stop: function(time, decay) {
+//			// setTargetAtTime reduces the value exponentially according to the
+//			// decay. If we set the timeout to decay x 11 we can be pretty sure
+//			// the value is down at least -96dB.
+//			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+//
+//			this.stopTime = time + Math.ceil(decay * 11);
+//			this.nodes[0].stop(this.stopTime);
+//			this.nodes[1].gain.setTargetAtTime(0, time, decay);
+//
+//			// Do we need to disconnect nodes or are they thrown away automatically?
+//			//setTimeout(function() {
+//			//	this.nodes[0].disconnect();
+//			//	this.nodes[1].disconnect();
+//			//}, Math.ceil(decay * 11));
+//		}
+//	});
+//
+//	var Voice = Fn.pool(Note, function isIdle(note) {
+//		var audio = note.audio;
+//		// currentTime is the start of the next 128 sample frame, so add a
+//		// frame duration to stopTime before comparing.
+//		return audio.currentTime > note.stopTime + 128 / audio.sampleRate;
+//	});
 
-	Note.reset = function reset(note) {
-		var nodes = this.nodes;
-		nodes[0] = audio.createBufferSource();
-		nodes[0].buffer = buffer;
-		nodes[0].loop = loop;
-		nodes[0].connect(nodes[1]);
-	};
 
-	assign(Note.prototype, {
+	var Voice = Fn.Pool({
+		create: function create(audio, buffer, loop, destination, options) {
+			this.audio = audio;
+			this.nodes = [undefined, audio.createGain()];
+			this.nodes[1].connect(destination);
+		},
+
+		reset: function reset(audio, buffer, loop, destination, options) {
+			var nodes = this.nodes;
+			nodes[0] = audio.createBufferSource();
+			nodes[0].buffer = buffer;
+			nodes[0].loop = loop;
+			nodes[0].connect(nodes[1]);
+			this.startTime = 0;
+			this.stopTime  = Infinity;
+		},
+
+		isIdle: function(note) {
+			var audio = note.audio;
+			// currentTime is the start of the next 128 sample frame, so add a
+			// frame duration to stopTime before comparing.
+			return audio.currentTime > note.stopTime + 128 / audio.sampleRate;
+		}
+	}, {
 		start: function(time, gain, detune) {
 			// WebAudio uses cents for detune where we use semitones.
 			// Bug: Chrome does not seem to support scheduling for detune...
 			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
 			this.nodes[0].detune.value = detune * 100;
 			this.nodes[0].start(time);
-			this.nodes[1].gain.value = gain;
+			this.nodes[1].gain.setValueAtTime(gain, time);
+			this.startTime = time;
 		},
 
 		stop: function(time, decay) {
@@ -126,8 +191,9 @@
 			// the value is down at least -96dB.
 			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
 
-			this.nodes[0].stop(time + Math.ceil(decay * 11));
+			this.stopTime = time + Math.ceil(decay * 11);
 			this.nodes[1].gain.setTargetAtTime(0, time, decay);
+			this.nodes[0].stop(this.stopTime);
 
 			// Do we need to disconnect nodes or are they thrown away automatically?
 			//setTimeout(function() {
@@ -136,11 +202,6 @@
 			//}, Math.ceil(decay * 11));
 		}
 	});
-
-	var Voice = Fn.pool(Note, function isActive(note) {
-		return true;
-	});
-
 
 	// Sampler
 
@@ -228,7 +289,7 @@
 				velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
 				regionDetune = rangeDetune(region, number);
 
-				note = new Voice(audio, buffer, region.loop, output, options);
+				note = Voice(audio, buffer, region.loop, output, options);
 				note.start(time, regionGain * velocityGain, regionDetune);
 
 				// Store the region and associated nodes, that we may
