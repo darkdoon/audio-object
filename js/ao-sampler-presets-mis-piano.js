@@ -10,152 +10,68 @@
 	// 
 	// {
 	//   url: 'audio.wav',
+	//   frequency: 440       // number
 	//   noteRange: [minLimit, minFade, maxFade, maxLimit],     // All numbers as MIDI note numbers
 	//   velocityRange: [minLimit, minFade, maxFade, maxLimit], // All numbers in the range 0-1
 	//   velocitySensitivity: // 0-1
 	//   gain:                // 0-1
 	//   muteDecay:           // seconds
+	//   phaseAlign: 100      // Aligns the first 100ms of this sample with others with which it is cross-faded
 	// }
-	
+
 	// Note: URLs are temporary! They will change.
+	var base = 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.';
+	var extension = '.wav';
+
+	var ppVelocity = [0, 0, 2/12, 6/12];
+	var mfVelocity = [2/12, 6/12, 7/12, 11/12];
+	var ffVelocity = [7/12, 11/12, 1, 1];
+	
+	var ppGain = 6;
+	var mfGain = 12/7;
+	var ffGain = 1;
+
+	function createSample(name, dynamic) {
+		var number    = Music.noteToNumber(name);
+		var frequency = Music.numberToFrequency(number);
+
+		return {
+			url: base + dynamic + '.' + name + extension,
+			frequency: frequency,
+			noteRange: [
+				number - (name === 'C3' ? 6 : (name[name.length - 1] === '3' || name[name.length - 1] === '4' || name[name.length - 1] === '5') ? 2 : 6),
+				number,
+				number + ((name[name.length - 1] === '3' || name[name.length - 1] === '4') ? 2 : 6)
+			],
+			velocityRange: dynamic === 'pp' ? ppVelocity :
+			               dynamic === 'mf' ? mfVelocity :
+			               ffVelocity ,
+			velocitySensitivity: 0.5,
+			gain: dynamic === 'pp' ? ppGain :
+			      dynamic === 'mf' ? mfGain :
+			      ffGain ,
+			muteDecay: 0.2,
+			decay: 0.08,
+			// Allow 6 full wavelengths or 12ms, whichever is greater
+			phaseAlign: Math.max(6 / frequency, 0.012)
+		};
+	}
+
+	var notes    = ['C1', 'C2', 'C3', 'E3', 'Ab3', 'C4', 'E4', 'Ab4', 'C5', 'C6', 'C7', 'C8'];
+	var dynamics = ['pp', 'mf', 'ff'];
 
 	presets.add({
-		type: 'sample-map',
-		version: '0.1',
-		name: 'MIS Piano',
-
-		data: [
-
-		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C2.wav',
-			noteRange: [30, 36, 42],
-			velocityRange: [0, 0, 2/12, 6/12],
-			velocitySensitivity: 0.5,
-			gain: 6,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C2.wav',
-			noteRange: [30, 36, 42],
-			velocityRange: [2/12, 6/12, 7/12, 11/12],
-			velocitySensitivity: 0.5,
-			gain: 12/7,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C2.wav',
-			noteRange: [30, 36, 42],
-			velocityRange: [7/12, 11/12, 1, 1],
-			velocitySensitivity: 0.5,
-			gain: 1,
-			muteDecay: 0.2,
-			decay: 0.08
-		},
-		
-		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C3.wav',
-			noteRange: [42, 48, 54],
-			velocityRange: [0, 0, 2/12, 6/12],
-			velocitySensitivity: 0.5,
-			gain: 6,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C3.wav',
-			noteRange: [42, 48, 54],
-			velocityRange: [2/12, 6/12, 7/12, 11/12],
-			velocitySensitivity: 0.5,
-			gain: 12/7,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C3.wav',
-			noteRange: [42, 48, 54],
-			velocityRange: [7/12, 11/12, 1, 1],
-			velocitySensitivity: 0.5,
-			gain: 1,
-			muteDecay: 0.2,
-			decay: 0.08
-		},
-
-		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C4.wav',
-			noteRange: [54, 60, 66],
-			velocityRange: [0, 0, 2/12, 6/12],
-			velocitySensitivity: 0.5,
-			gain: 6,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C4.wav',
-			noteRange: [54, 60, 66],
-			velocityRange: [2/12, 6/12, 7/12, 11/12],
-			velocitySensitivity: 0.5,
-			gain: 12/7,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C4.wav',
-			noteRange: [54, 60, 66],
-			velocityRange: [7/12, 11/12, 1, 1],
-			velocitySensitivity: 0.5,
-			gain: 1,
-			muteDecay: 0.2,
-			decay: 0.08
-		},
-
-		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C5.wav',
-			noteRange: [66, 72, 78],
-			velocityRange: [0, 0, 2/12, 6/12],
-			velocitySensitivity: 0.5,
-			gain: 6,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C5.wav',
-			noteRange: [66, 72, 78],
-			velocityRange: [2/12, 6/12, 7/12, 11/12],
-			velocitySensitivity: 0.5,
-			gain: 12/7,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C5.wav',
-			noteRange: [66, 72, 78],
-			velocityRange: [7/12, 11/12, 1, 1],
-			velocitySensitivity: 0.5,
-			gain: 1,
-			muteDecay: 0.2,
-			decay: 0.08
-		},
-
-		{
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.pp.C6.wav',
-			noteRange: [78, 84, 90],
-			velocityRange: [0, 0, 2/12, 6/12],
-			velocitySensitivity: 0.5,
-			gain: 6,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.mf.C6.wav',
-			noteRange: [78, 84, 90],
-			velocityRange: [2/12, 6/12, 7/12, 11/12],
-			velocitySensitivity: 0.5,
-			gain: 12/7,
-			muteDecay: 0.2,
-			decay: 0.08
-		}, {
-			url: 'http://localhost/sound.io/soundio/static/audio/mis-piano/samples/Piano.ff.C6.wav',
-			noteRange: [78, 84, 90],
-			velocityRange: [7/12, 11/12, 1, 1],
-			velocitySensitivity: 0.5,
-			gain: 1,
-			muteDecay: 0.2,
-			decay: 0.08
-		}
-
-		]
+		type:    'sample-map',
+		version: 0,
+		name:    'MIS Piano',
+		data: notes
+			.map(function(name) {
+				return dynamics.map(function(dynamic) {
+					return createSample(name, dynamic);
+				});
+			})
+			.reduce(function(out, samples) {
+				return out.concat(samples);
+			}, [])
 	});
 })(window);
