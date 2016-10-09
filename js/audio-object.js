@@ -23,13 +23,9 @@
 	var automatorMap = new WeakMap();
 
 	var defaults = {
-	    	duration: 0.008,
-	    	curve: 'linear'
-	    };
-
-	var features = {};
-
-	var map = Function.prototype.call.bind(Array.prototype.map);
+			duration: 0.008,
+			curve: 'linear'
+		};
 
 	var minExponentialValue = 1.4013e-45;
 
@@ -143,9 +139,8 @@
 		if (events[n][2] === "target") {
 			return curves.target(getValueAtEvent(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
 		}
-		else {
-			return events[n][1];
-		}
+
+		return events[n][1];
 	}
 
 	function getEventsValueAtTime(events, time) {
@@ -153,21 +148,20 @@
 
 		while (events[--n] && events[n][0] >= time);
 
-		var event1 = events[n];
-		var event2 = events[n + 1];
+		var event = events[n + 1];
 
-		if (!event2) {
+		if (!event) {
 			return getValueAtEvent(events, n, time) ;
 		}
 
-		if (event2[0] === time) {
+		if (event[0] === time) {
 			// Spool through to find last event at this time
 			while (events[++n] && events[n][0] === time);
 			return getValueAtEvent(events, --n, time) ;
 		}
 
-		if (time < event2[0]) {
-			return event2[2] === "linear" || event2[2] === "exponential" ?
+		if (time < event[0]) {
+			return event[2] === "linear" || event[2] === "exponential" ?
 				getValueBetweenEvents(events, n, time) :
 				getValueAtEvent(events, n, time) ;
 		}
@@ -204,10 +198,11 @@
 		while (events[--n] && events[n][0] >= time);
 
 		var event = events[n + 1];
+		var curve, value;
 
 		if (!event) {
 			if (events[n]) {
-				var value = getValueAtEvent(events, n, time);
+				value = getValueAtEvent(events, n, time);
 				automateParamEvents(param, events, time, value, "step");
 			}
 
@@ -228,9 +223,8 @@
 		}
 
 		if (event[0] > time) {
-			var curve = event[2];
-			var value = getEventsValueAtTime(events, time);
-
+			curve = event[2];
+			value = getEventsValueAtTime(events, time);
 			events.splice(n + 1);
 
 			// Schedule intermediate point on the curve
@@ -328,9 +322,9 @@
 		var value = param ? param.value : data.value || 0 ;
 		var events = param ? getParamEvents(param) : [[0, value]];
 		var message = {
-		    	type: 'update',
-		    	name: name
-		    };
+				type: 'update',
+				name: name
+			};
 
 		function set(value, time, curve, duration) {
 			//var value1 = getEventsValueAtTime(events, time);
@@ -383,13 +377,13 @@
 			window.requestAnimationFrame(frame);
 		}
 
-		function automate(value, time, curve, duration) {
+		var automate = function automate(value, time, curve, duration) {
 			time     = isDefined(time) ? time : audio.currentTime;
 			duration = isDefined(duration) ? duration : defaultDuration;
 
 			set(value, time, curve || data.curve, duration);
 			window.requestAnimationFrame(frame);
-		}
+		};
 
 		registerAutomator(object, name, automate);
 
@@ -477,9 +471,11 @@
 		// Keep a map of inputs in AudioObject.inputs. Where we're using
 		// AudioObject as a mixin, extend the inputs object if it already
 		// exists.
+		var inputs1, inputs2;
+
 		if (input) {
-			var inputs1 = isAudioNode(input) ? { default: input } : input ;
-			var inputs2 = inputs.get(this);
+			inputs1 = isAudioNode(input) ? { default: input } : input ;
+			inputs2 = inputs.get(this);
 
 			if (inputs2) {
 				assign(inputs2, inputs1);
@@ -492,9 +488,11 @@
 		// Keep a map of outputs in AudioObject.outputs. Where we're using
 		// AudioObject as a mixin, extend the inputs object if it already
 		// exists.
+		var outputs1, outputs2;
+
 		if (output) {
-			var outputs1 = isAudioNode(output) ? { default: output } : output ;
-			var outputs2 = outputs.get(this);
+			outputs1 = isAudioNode(output) ? { default: output } : output ;
+			outputs2 = outputs.get(this);
 
 			if (outputs2) {
 				assign(outputs2, outputs1);
@@ -527,7 +525,6 @@
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
 				throw new Error('AudioObject: property "' + name + '" is not automatable.');
-				return;
 			}
 
 			var fn = automators[name];
@@ -536,7 +533,6 @@
 				// Only properties that have been registered
 				// by defineAudioProperty() can be automated.
 				throw new Error('AudioObject: property "' + name + '" is not automatable.');
-				return;
 			}
 
 			fn(value, time, curve, duration);
@@ -556,8 +552,6 @@
 	});
 
 	function scheduleEvent(object, event) {
-		var param, value, curve;
-
 		//var events = getParamEvents(param);
 
 		var time = event[0];
@@ -593,9 +587,8 @@
 			// Only properties that have been registered
 			// by defineAudioProperty() can be automated.
 			// Ignore.
-			console.log('AudioObject: no param "' + name + '"', event);
+			if (AudioObject.debug) { console.log('AudioObject: no param "' + name + '"', event); }
 			return;
-			//throw new Error('AudioObject: property "' + name + '" is not automatable.');
 		}
 
 		var value = event[3];
@@ -625,6 +618,7 @@
 	}
 
 	assign(AudioObject, {
+		debug:    true,
 		automate: function(param, time, value, curve, duration) {
 			time = curve === "linear" || curve === "exponential" ?
 				time + duration :

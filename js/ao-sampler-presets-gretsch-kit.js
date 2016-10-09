@@ -1,6 +1,9 @@
 (function(window) {
 	"use strict";
 
+	var Collection  = window.Collection;
+	var AudioObject = window.AudioObject;
+
 	var presets = AudioObject.presets || (AudioObject.presets = Collection([], { index: 'name' }));
 
 	// Gretsch Kit by @stephband and @hughlawrence

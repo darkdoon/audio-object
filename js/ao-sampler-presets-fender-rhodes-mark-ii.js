@@ -1,6 +1,9 @@
 (function(window) {
 	"use strict";
 
+	var Collection  = window.Collection;
+	var AudioObject = window.AudioObject;
+
 	var presets = AudioObject.presets || (AudioObject.presets = Collection([], { index: 'name' }));
 
 	// C_S Fender Rhodes Mark II by Corsica_S
@@ -48,4 +51,4 @@
 			return data;
 		})(['c','c-','d','d-','e','f','f-','g','g-','a','a-','b'])
 	});
-})(window);
+})(this);

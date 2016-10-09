@@ -3,7 +3,9 @@
 
 	// Import
 
+	var Fn          = window.Fn;
 	var AudioObject = window.AudioObject;
+	var observe     = window.observe;
 
 	// Todo: move the function out of midi-utils into a more generic library.
 	// Well write it out in full here for now.
@@ -35,36 +37,42 @@
 
 	var defaults = createDefaults(automation);
 
-	function aliasProperty(object, node, name) {
-		Object.defineProperty(object, name, {
-			get: function() { return node[name]; },
-			set: function(value) { node[name] = value; },
-			enumerable: true
-		});
-	}
+//	function aliasProperty(object, node, name) {
+//		Object.defineProperty(object, name, {
+//			get: function() { return node[name]; },
+//			set: function(value) { node[name] = value; },
+//			enumerable: true
+//		});
+//	}
 
-	function aliasMethod(object, node, name) {
-		object[name] = function() {
-			node[name].apply(node, arguments);
-		};
-	}
+//	function aliasMethod(object, node, name) {
+//		object[name] = function() {
+//			node[name].apply(node, arguments);
+//		};
+//	}
 
-	function Note(audio, number, destination, options) {
-		var oscillator = audio.createOscillator();
-		var envelope   = audio.createGain();
+	var Voice = Fn.Pool({
+		create: function(audio, number, destination, options) {
+			this.envelope = audio.createGain();
+			this.envelope.connect(destination);
+		},
 
-		this.nodes = [oscillator, envelope];
+		reset: function(audio, number, destination, options) {
+			this.oscillator = audio.createOscillator();
+			this.oscillator.detune.value    = options.detune;
+			this.oscillator.frequency.value = numberToFrequency(number);
+			this.oscillator.type            = options.waveform || 'sine';
+			this.oscillator.connect(this.envelope);
+			this.envelope.gain.setValueAtTime(0, audio.currentTime);
+		},
 
-		oscillator.detune.value    = options.detune;
-		oscillator.frequency.value = numberToFrequency(number);
-		oscillator.type            = options.waveform || 'sine';
-		oscillator.connect(envelope);
-
-		envelope.gain.setValueAtTime(0, 0);
-		envelope.connect(destination);
-	}
-
-	assign(Note.prototype, {
+		isIdle: function(voice) {
+			var audio = voice.audio;
+			// currentTime is the start of the next 128 sample frame, so add a
+			// frame duration to stopTime before comparing.
+			return audio.currentTime >= voice.stopTime + 128 / audio.sampleRate;
+		}
+	}, {
 		start: function(time) {
 			this.nodes[0].start(time);
 			this.nodes[1].gain.setValueAtTime(0, time);
@@ -78,6 +86,11 @@
 	});
 
 	function Oscillator(audio, settings) {
+		if (!AudioObject.isAudioObject(this)) {
+			return new Oscillator(audio, settings);
+		}
+
+		var object  = this;
 		var options = assign({}, defaults, settings);
 		var output  = audio.createGain();
 		var notes   = {};
@@ -95,20 +108,25 @@
 		// We shouldn't use 'type' as it is required by
 		// Soundstage to describe the type of audio object.
 		// Waveform. Yeah.
-		Object.defineProperty(this, 'waveform', {
-			get: function() { return node.type; },
-			set: function(value) { node.type = value; },
-			enumerable: true
-		});
+
+		function updateWaveform() {
+			var waveform = object.waveform;
+			var name;
+			for (name in Object.keys(notes)) {
+				notes[name].oscillator.type = waveform;
+			}
+		}
+
+		observe(this, 'waveform', updateWaveform);
 
 		this.start = function(time, number) {
 			if (notes[number]) {
 				notes[number].stop(time);
 			}
 
-			var note = new Note(audio, number, output, options);
-			notes[number] = note;
-			note.start(time || audio.currentTime);
+			var voice = new Voice(audio, number, output, options);
+			notes[number] = voice;
+			voice.start(time || audio.currentTime);
 			return this;
 		};
 
@@ -119,13 +137,12 @@
 			return this;
 		};
 
-		this.setPeriodicWave = function() {
-			node.setPeriodicWave.apply(node, arguments);
-			return this;
-		};
-
 		this.destroy = function() {
-			node.disconnect();
+			var name;
+			for (name in Object.keys(notes)) {
+				notes[name].stop();
+			}
+			output.disconnect();
 			return this;
 		};
 	}

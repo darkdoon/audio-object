@@ -2,24 +2,24 @@
 	"use strict";
 
 	var defaults = {
-	    	defaultValue: 1,
-	    	maxValue: 1,
-	    	minValue: 0,
-	    	name: "",
-	    	units: 0,
-	    	value: 1
-	    };
+			defaultValue: 1,
+			maxValue: 1,
+			minValue: 0,
+			name: "",
+			units: 0,
+			value: 1
+		};
 
 	var extend = Object.assign;
 
 	var prototype = {
-	    	cancelScheduledValues: function cancelScheduledValues() {},
-	    	exponentialRampToValueAtTime: function exponentialRampToValueAtTime() {},
-	    	linearRampToValueAtTime: function linearRampToValueAtTime() {},
-	    	setTargetAtTime: function setTargetAtTime() {},
-	    	setValueAtTime: function setValueAtTime() {},
-	    	setValueCurveAtTime: function setValueCurveAtTime() {}
-	    };
+			cancelScheduledValues: function cancelScheduledValues() {},
+			exponentialRampToValueAtTime: function exponentialRampToValueAtTime() {},
+			linearRampToValueAtTime: function linearRampToValueAtTime() {},
+			setTargetAtTime: function setTargetAtTime() {},
+			setValueAtTime: function setValueAtTime() {},
+			setValueCurveAtTime: function setValueCurveAtTime() {}
+		};
 
 	function isDefined(val) {
 		return val !== undefined && val !== null;
@@ -29,8 +29,8 @@
 		extend(this, defaults, options);
 
 		var value = isDefined(options.value) ?
-		    	options.value :
-		    	defaults.value ;
+			options.value :
+			defaults.value ;
 
 		Object.defineProperty(this, 'value', {
 			get: function() {
