@@ -52,6 +52,8 @@
 //	}
 
 	var Voice = Fn.Pool({
+		name: "Oscillator Voice",
+
 		create: function(audio, number, destination, options) {
 			this.envelope = audio.createGain();
 			this.envelope.connect(destination);

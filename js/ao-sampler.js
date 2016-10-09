@@ -20,7 +20,7 @@
 		"sample-map":       "Gretsch Kit",
 		"gain":             0.5,
 		"detune":           0,
-		"filter-type":      "lowpass",
+		"filter-type":      "off",
 		// frequency at "note", 69, 0.5
 		"filter-frequency": 1760,
 		// octaves/octave
@@ -28,16 +28,38 @@
 		// octaves/velocity
 		"filter-frequency-from-velocity": 0,
 		"filter-q":                   6,
-		"filter-q-from-note":         0,
-		"filter-q-from-velocity":     0,
-		"attack":                     [],
-		"attack-rate-from-note":      0,
-		"attack-rate-from-velocity":  0,
-		"attack-scale-from-note":     0,
-		"attack-scale-from-velocity": 0,
-		"release":                    [],
-		"release-rate-from-note":     0,
-		"release-scale-from-note":    0,
+		//"filter-q-from-note":         0,
+		//"filter-q-from-velocity":     0,
+
+		//"connect": {
+		//	"filter-frequency": {
+		//		"note": 1,
+		//		"velocity": 0,
+		//		"envelope": 0
+		//	},
+		//	"filter-q": {
+		//		"note": 1,
+		//		"velocity": 0,
+		//		"envelope": 0
+		//	},
+		//	"attack": {
+		//		"note": 1,
+		//		"velocity": 1
+		//	},
+		//	"attack-rate": {
+		//		"note": 1,
+		//		"velocity": 1
+		//	}
+		//},
+
+		//"attack":                     [],
+		//"attack-rate-from-note":      0,
+		//"attack-rate-from-velocity":  0,
+		//"attack-scale-from-note":     0,
+		//"attack-scale-from-velocity": 0,
+		//"release":                    [],
+		//"release-rate-from-note":     0,
+		//"release-scale-from-note":    0,
 	};
 
 
@@ -153,7 +175,9 @@
 
 			this.filter.disconnect();
 			this.filter.connect(destination);
+			this.filter.Q.cancelScheduledValues(time);
 			this.filter.Q.setValueAtTime(0, time);
+			this.envelopeGain.gain.cancelScheduledValues(time);
 			this.envelopeGain.gain.setValueAtTime(1, time);
 			//this.envelope.gain.setValueAtTime(0, time);
 			//this.velocityMultiplier.gain.setValueAtTime(1 + velocityFollow * velocityFactor, time);
@@ -227,6 +251,7 @@
 			//this.nodes[0].detune.setValueAtTime(detune * 100, time);
 			this.source.detune.value = detune * 100;
 			this.source.start(time);
+			this.gain.gain.cancelScheduledValues(time);
 			this.gain.gain.setValueAtTime(gain, time);
 			this.startTime = time;
 		},
@@ -313,9 +338,9 @@
 		}
 	}
 
-	function Sampler(audio, settings, clock, presets) {
+	function Sampler(audio, settings, presets) {
 		if (!AudioObject.isAudioObject(this)) {
-			return new Sampler(audio, settings, clock, presets);
+			return new Sampler(audio, settings, presets);
 		}
 
 		var options = assign({}, defaults, settings);
