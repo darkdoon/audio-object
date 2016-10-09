@@ -33,6 +33,7 @@
 			velocityRange: [0/7, 1/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-03.wav',
@@ -40,6 +41,7 @@
 			velocityRange: [1/7, 2/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-04.wav',
@@ -47,6 +49,7 @@
 			velocityRange: [2/7, 3/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-06.wav',
@@ -54,6 +57,7 @@
 			velocityRange: [3/7, 4/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-07.wav',
@@ -61,6 +65,7 @@
 			velocityRange: [4/7, 5/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-09.wav',
@@ -68,6 +73,7 @@
 			velocityRange: [5/7, 6/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, {
 			url: 'http://localhost/sound.io/soundio/static/audio/gretsch-kit/samples/bassdrum+oh-10.wav',
@@ -75,6 +81,7 @@
 			velocityRange: [6/7, 7/7],
 			velocitySensitivity: 0.25,
 			gain: 1.5,
+			decay: 0.2,
 			muteDecay: 0.08
 		}, 
 
