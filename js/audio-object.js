@@ -20,12 +20,10 @@
 
 	// Define
 
-	var automatorMap = new WeakMap();
-
 	var defaults = {
-			duration: 0.008,
-			curve: 'linear'
-		};
+		duration: 0.008,
+		curve: 'linear'
+	};
 
 	var minExponentialValue = 1.4013e-45;
 
@@ -62,17 +60,6 @@
 		return AudioObject.prototype.isPrototypeOf(object);
 	}
 
-	function registerAutomator(object, name, fn) {
-		var automators = automatorMap.get(object);
-
-		if (!automators) {
-			automators = {};
-			automatorMap.set(object, automators);
-		}
-
-		automators[name] = fn;
-	}
-
 
 	// Feature tests
 
@@ -90,9 +77,9 @@
 	}
 
 
-	// Maths
+	// AudioParam
 
-	var methods = {
+	var longnames = {
 		"step":        "setValueAtTime",
 		"linear":      "linearRampToValueAtTime",
 		"exponential": "exponentialRampToValueAtTime",
@@ -128,127 +115,65 @@
 		}
 	};
 
-	function getValueBetweenEvents(events, n, time) {
-		var event1 = events[n];
-		var event2 = events[n + 1];
-		var time1  = event1[0];
-		var time2  = event2[0];
-		var value1 = event1[1];
-		var value2 = event2[1];
-		var curve  = event2[2];
-		var duration = event2[3];
+	var paramEvents = new WeakMap();
 
-		return curves[curve](value1, value2, time1, time2, time, duration);
+	function getValueBetweenEvents(event1, event2, time) {
+		var curve  = event2[2];
+		return curves[curve](event1[1], event2[1], event1[0], event2[0], time, event1[3]);
 	}
 
 	function getValueAtEvent(events, n, time) {
-		if (events[n][2] === "target") {
-			return curves.target(getValueAtEvent(events, n - 1, events[n][0]), events[n][1], 0, events[n][0], time, events[n][3]);
-		}
+		var event = events[n];
 
-		return events[n][1];
+		return event[2] === "target" ?
+			curves.target(getValueAtEvent(events, n - 1, event[0]), event[1], 0, event[0], time, event[3]) :
+			event[1] ;
 	}
 
-	function getEventsValueAtTime(events, time) {
+	function getValueAtTime(events, time) {
 		var n = events.length;
 
 		while (events[--n] && events[n][0] >= time);
 
-		var event = events[n + 1];
+		var event1 = events[n];
+		var event2 = events[n + 1];
 
-		if (!event) {
-			return getValueAtEvent(events, n, time) ;
+		if (!event2) {
+			return getValueAtEvent(events, n, time);
 		}
 
-		if (event[0] === time) {
+		if (event2[0] === time) {
 			// Spool through to find last event at this time
 			while (events[++n] && events[n][0] === time);
 			return getValueAtEvent(events, --n, time) ;
 		}
 
-		if (time < event[0]) {
-			return event[2] === "linear" || event[2] === "exponential" ?
-				getValueBetweenEvents(events, n, time) :
+		if (time < event2[0]) {
+			return event2[2] === "linear" || event2[2] === "exponential" ?
+				getValueBetweenEvents(event1, event2, time) :
 				getValueAtEvent(events, n, time) ;
 		}
 	}
 
-	function getParamValueAtTime(param, time) {
-		var events = param['audio-object-events'];
-
-		if (!events || events.length === 0) {
-			return param.value;
-		}
-
-		return getEventsValueAtTime(events, time);
-	}
-
 	function getParamEvents(param) {
-		// I would love to use a WeakMap to store data about
-		// AudioParams, but FF refuses to allow that. I'm
-		// going to use an expando, against my better
-		// judgement, but let's come back to this problem.
-		var events = param['audio-object-events'];
+		// Todo: I would love to use a WeakMap to store data about
+		// AudioParams, but FF refuses to allow that. UPDATE: Tested again
+		// in FF49 and it appears to work. Let's keep an eye on this problem.
+		var events = paramEvents.get(param);
 
 		if (!events) {
-			events = [[0, param.value]];
-			param['audio-object-events'] = events;
+			events = [[0, param.value, 'step']];
+			paramEvents.set(param, events);
 		}
 
 		return events;
 	}
 
-	function truncateParamEvents(param, events, time) {
-		var n = events.length;
-
-		while (events[--n] && events[n][0] >= time);
-
-		var event = events[n + 1];
-		var curve, value;
-
-		if (!event) {
-			if (events[n]) {
-				value = getValueAtEvent(events, n, time);
-				automateParamEvents(param, events, time, value, "step");
-			}
-
-			return;
-		}
-
-		param.cancelScheduledValues(time);
-
-		if (event[0] === time) {
-			events.splice(n + 1);
-
-			// Reschedule lopped curve
-			if (curve === "linear" || curve === "exponential") {
-				automateParamEvents(param, events, time, event[1], event[2], event[3]);
-			}
-
-			return;
-		}
-
-		if (event[0] > time) {
-			curve = event[2];
-			value = getEventsValueAtTime(events, time);
-			events.splice(n + 1);
-
-			// Schedule intermediate point on the curve
-			if (curve === "linear" || curve === "exponential") {
-				automateParamEvents(param, events, time, value, curve);
-			}
-			else if (events[n] && events[n][2] === "target") {
-				automateParamEvents(param, events, time, value, "step");
-			}
-
-			return;
-		}
-	}
-
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
-//console.log('automateParamEvents', events, time, value, curve, duration);
-		var n = events.length;
+
+		var audio = param.context;
+		var n     = events.length;
 
 		while (events[--n] && events[n][0] >= time);
 
@@ -269,12 +194,12 @@
 			}
 		}
 
-		duration = curve === "step" ? 0 : duration ;
+		// Schedule the param event - curve is shorthand for one of the
+		// automation methods
+		param[longnames[curve]](value, time, duration);
 
+		// Keep events organised as AudioParams do
 		var event = [time, value, curve, duration];
-
-		// curve is shorthand for one of the automation methods
-		param[methods[curve]](value, time, duration);
 
 		// If the new event is at the end of the events list
 		if (!event2) {
@@ -301,11 +226,6 @@
 		events.splice(n + 1, 0, event);
 	}
 
-	function automateParam(param, time, value, curve, duration) {
-		var events = getParamEvents(param);
-		automateParamEvents(param, events, time, value, curve, duration);
-	}
-
 
 	// AudioProperty
 
@@ -314,51 +234,30 @@
 
 		if (param ? !isAudioParam(param) : !data.set) {
 			throw new Error(
-				'AudioObject.defineAudioProperty requires EITHER data.param to be an AudioParam' +
-				'OR data.set to be defined as a function.'
+				'AudioObject.defineAudioProperty requires EITHER data.param ' +
+				'to be an AudioParam OR data.set to be a function.'
 			);
 		}
 
 		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
 		var defaultCurve = data.curve || defaults.curve ;
 		var value = param ? param.value : data.value || 0 ;
-		var events = param ? getParamEvents(param) : [[0, value]];
-		var message = {
-				type: 'update',
-				name: name
-			};
+		var events = param ? getParamEvents(param) : [[0, value, 'step']];
 
 		function set(value, time, curve, duration) {
 			curve = curve || defaultCurve;
 
-			//var value1 = getEventsValueAtTime(events, time);
-			var value2 = value;
-			//var time1  = time;
-			var time2  = time + duration;
-
 			if (param) {
-				automateParamEvents(param, events, time2, value2, curve, duration);
+				automateParamEvents(param, events, time, value, curve, duration);
 			}
 			else {
 				data.set.apply(object, arguments);
-				events.push([time2, value2, curve, duration]);
-			}
-		}
-
-		function update(v) {
-			// Set the old value of the message to the current value before
-			// updating the value.
-			message.oldValue = value;
-			value = v;
-
-			// Update the observe message and send it.
-			if (Object.getNotifier) {
-				Object.getNotifier(object).notify(message);
+				events.push([time, value, curve, duration]);
 			}
 		}
 
 		function frame() {
-			var currentValue = getEventsValueAtTime(events, audio.currentTime);
+			var currentValue = getValueAtTime(events, audio.currentTime);
 
 			// Stop updating if value has reached param value
 			if (value === currentValue) { return; }
@@ -372,6 +271,8 @@
 
 			// Set the property. This is what causes observers to be called.
 			object[name] = currentValue;
+
+			// Replace automate and cue animation frame update
 			automate = _automate;
 			window.requestAnimationFrame(frame);
 		}
@@ -379,12 +280,12 @@
 		var automate = function automate(value, time, curve, duration) {
 			time     = isDefined(time) ? time : audio.currentTime;
 			duration = isDefined(duration) ? duration : defaultDuration;
-
 			set(value, time, curve || data.curve, duration);
 			window.requestAnimationFrame(frame);
 		};
 
-		registerAutomator(object, name, automate);
+		setObjectParam(object, name, param || data);
+		setAutomate(param || data, automate);
 
 		Object.defineProperty(object, name, {
 			// Return value because we want values that have just been set
@@ -396,9 +297,7 @@
 				// If automate is not set to noop this will launch an
 				// automation.
 				automate(val);
-
-				// Create a new notify message and update the value.
-				update(val);
+				value = val;
 			},
 
 			enumerable: isDefined(data.enumerable) ? data.enumerable : true,
@@ -421,8 +320,10 @@
 
 	// AudioObject
 
-	var inputs = new WeakMap();
-	var outputs = new WeakMap();
+	var inputs       = new WeakMap();
+	var outputs      = new WeakMap();
+	var objectParams = new WeakMap();
+	var automatorMap = new WeakMap();
 
 	function defineInputs(object, properties) {
 		var map = inputs.get(object);
@@ -456,10 +357,32 @@
 		return map && map[isDefined(name) ? name : 'default'];
 	}
 
+	function setObjectParam(object, name, param) {
+		var params = objectParams.get(object);
+
+		if (!params) {
+			params = {};
+			objectParams.set(object, params);
+		}
+
+		params[name] = param;
+	}
+
+	function getObjectParam(object, name) {
+		var params = objectParams.get(object);
+		return params && params[name];
+	}
+
+	function setAutomate(param, fn) {
+		automatorMap.set(param, fn);
+	}
+
+	function getAutomate(param, name) {
+		return automatorMap.get(param);
+	}
+
 	function AudioObject(audio, input, output, params) {
-		if (this === undefined || this === window) {
-			// If this is undefined the constructor has been called without the
-			// new keyword, or without a context applied. Do that now.
+		if (!isAudioObject(this)) {
 			return new AudioObject(audio, input, output, params);
 		}
 
@@ -511,13 +434,17 @@
 
 	assign(AudioObject.prototype, {
 		automate: function(time, name, value, curve, duration) {
-			var automators = automatorMap.get(this);
+			var param = getObjectParam(this, name);
 
-			if (!automators || !automators[name]) {
-				// Only properties that have been registered
-				// by defineAudioProperty() can be automated.
-				// Ignore.
-				if (AudioObject.debug) { console.log('AudioObject: no param "' + name + '"', event); }
+			if (!param) {
+				if (AudioObject.debug) { console.warn('AudioObject: cannot .automate(), no param "' + name + '"'); }
+				return;
+			}
+
+			var automate = getAutomate(param);
+
+			if (!automate) {
+				if (AudioObject.debug) { console.warn('AudioObject: cannot .automate(), param "' + name + '" has no automate fn'); }
 				return;
 			}
 
@@ -531,8 +458,16 @@
 				}
 			}
 
-			automators[name](value, time, curve, duration);
+			automate(value, time, curve, duration);
 			return this;
+		},
+
+		valueAtTime: function(name, time) {
+			var param  = getObjectParam(this, name);
+			if (!param) { return; }
+			var events = getParamEvents(param);
+			if (!events) { return; }
+			return getValueAtTime(events, time);
 		},
 
 		destroy: noop
@@ -541,20 +476,22 @@
 	assign(AudioObject, {
 		debug:    true,
 
-		automate: function(param, time, value, curve, duration) {
-			curve = curve || "step" ;
-			return automateParam(param, time, value, curve, duration);
-		},
+		// Todo: Is this needed? Seems like crud to me.
+		//automateParam: function(param, time, value, curve, duration) {
+		//	curve = curve || "step" ;
+		//	var events = getParamEvents(param);
+		//	automateParamEvents(param, events, time, value, curve, duration);
+		//	return this;
+		//},
 
-		truncate: function(param, time) {
-			var events = param['audio-object-events'];
-			if (!events) { return; }
+		//automate2: automateParam,
+		//paramValueAtTime: 	function getParamValueAtTime(param, time) {
+		//	var events = getParamEvents(param);
+		//	return (!events || events.length === 0) ?
+		//		param.value :
+		//		getValueAtTime(events, time);
+		//},
 
-			truncateParamEvents(param, events, time);
-		},
-
-		automate2: automateParam,
-		valueAtTime: getParamValueAtTime,
 		defineInputs: defineInputs,
 		defineOutputs: defineOutputs,
 		defineAudioProperty: defineAudioProperty,
