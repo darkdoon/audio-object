@@ -43,9 +43,9 @@
 			url: base + dynamic + '.' + name + extension,
 			frequency: frequency,
 			noteRange: [
-				number - (name === 'C2' ? 6 : (name[name.length - 1] === '2' || name[name.length - 1] === '3' || name[name.length - 1] === '4' || name[name.length - 1] === '5') ? 2 : 6),
+				number - (name === 'C2' ? 6 : (name[name.length - 1] === '2' || name[name.length - 1] === '3' || name[name.length - 1] === '4' || name[name.length - 1] === '5' || name[name.length - 1] === '6') ? 2 : 6),
 				number,
-				number + ((name[name.length - 1] === '2' || name[name.length - 1] === '3' || name[name.length - 1] === '4') ? 2 : 6)
+				number + ((name[name.length - 1] === '2' || name[name.length - 1] === '3' || name[name.length - 1] === '4' || name[name.length - 1] === '5') ? 2 : 6)
 			],
 			velocityRange: dynamic === 'pp' ? ppVelocity :
 			               dynamic === 'mf' ? mfVelocity :
@@ -61,7 +61,7 @@
 		};
 	}
 
-	var notes    = ['C1', 'C2', 'E2', 'Ab2', 'C3', 'E3', 'Ab3', 'C4', 'E4', 'Ab4', 'C5', 'C6', 'C7', 'C8'];
+	var notes    = ['C1', 'C2', 'E2', 'Ab2', 'C3', 'E3', 'Ab3', 'C4', 'E4', 'Ab4', 'C5', 'E5', 'Ab5', 'C6', 'C7', 'C8'];
 	var dynamics = ['pp', 'mf', 'ff'];
 
 	presets.add({
