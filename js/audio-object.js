@@ -77,6 +77,24 @@
 	}
 
 
+	// AudioNode
+
+	function UnityNode(audio) {
+		var oscillator = audio.createOscillator();
+		var waveshaper = audio.createWaveShaper();
+	
+		var curve = new Float32Array(2);
+		curve[0] = curve[1] = 1;
+	
+		oscillator.type = 'square';
+		oscillator.connect(waveshaper);
+		oscillator.frequency.value = 100;
+		waveshaper.curve = curve;
+		oscillator.start();
+	
+		return waveshaper;
+	}
+
 	// AudioParam
 
 	var longnames = {
@@ -156,14 +174,17 @@
 	}
 
 	function getParamEvents(param) {
-		// Todo: I would love to use a WeakMap to store data about
-		// AudioParams, but FF refuses to allow that. UPDATE: Tested again
-		// in FF49 and it appears to work. Let's keep an eye on this problem.
-		var events = paramEvents.get(param);
+		// Todo: I would love to use a WeakMap to store data about AudioParams,
+		// but FF refuses to allow AudioParams as WeakMap keys. So... lets use
+		// an expando *sigh*.
+
+		//var events = paramEvents.get(param);
+		var events = param.audioObjectEvents;
 
 		if (!events) {
 			events = [[0, param.value, 'step']];
-			paramEvents.set(param, events);
+			//paramEvents.set(param, events);
+			param.audioObjectEvents = events;
 		}
 
 		return events;
@@ -374,11 +395,17 @@
 	}
 
 	function setAutomate(param, fn) {
-		automatorMap.set(param, fn);
+		// Todo: I would love to use a WeakMap to store data about AudioParams,
+		// but FF refuses to allow AudioParams as WeakMap keys. So... lets use
+		// an expando *sigh*. At least it'll be fast.
+		
+		//automatorMap.set(param, fn);
+		param.audioObjectAutomateFn = fn;
 	}
 
 	function getAutomate(param, name) {
-		return automatorMap.get(param);
+		//return automatorMap.get(param);
+		return param.audioObjectAutomateFn;
 	}
 
 	function AudioObject(audio, input, output, params) {
@@ -474,23 +501,19 @@
 	});
 
 	assign(AudioObject, {
-		debug:    true,
+		debug: true,
 
-		// Todo: Is this needed? Seems like crud to me.
-		//automateParam: function(param, time, value, curve, duration) {
-		//	curve = curve || "step" ;
-		//	var events = getParamEvents(param);
-		//	automateParamEvents(param, events, time, value, curve, duration);
-		//	return this;
-		//},
+		// Constants
 
-		//automate2: automateParam,
-		//paramValueAtTime: 	function getParamValueAtTime(param, time) {
-		//	var events = getParamEvents(param);
-		//	return (!events || events.length === 0) ?
-		//		param.value :
-		//		getValueAtTime(events, time);
-		//},
+		dB6:  1/2,
+		dB12: 1/4,
+		dB18: 1/8,
+		dB24: 1/16,
+		dB48: 1/256,
+		dB60: 1/1024,
+		dB96: 1/65536,
+
+		// Functions
 
 		defineInputs: defineInputs,
 		defineOutputs: defineOutputs,
@@ -515,21 +538,7 @@
 			});
 		}),
 
-		UnityNode: Fn.cache(function UnityNode(audio) {
-			var oscillator = audio.createOscillator();
-			var waveshaper = audio.createWaveShaper();
-		
-			var curve = new Float32Array(2);
-			curve[0] = curve[1] = 1;
-		
-			oscillator.type = 'square';
-			oscillator.connect(waveshaper);
-			oscillator.frequency.value = 100;
-			waveshaper.curve = curve;
-			oscillator.start();
-		
-			return waveshaper;
-		})
+		UnityNode: Fn.cache(UnityNode)
 	});
 
 	Object.defineProperty(AudioObject, 'minExponentialValue', {

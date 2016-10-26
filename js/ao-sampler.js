@@ -504,5 +504,6 @@
 	}
 
 	Sampler.prototype = Object.create(AudioObject.prototype);
+
 	AudioObject.Sampler = Sampler;
 })(window);
