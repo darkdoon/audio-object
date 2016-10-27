@@ -460,6 +460,10 @@
 	}
 
 	assign(AudioObject.prototype, {
+		start:   Fn.noop,
+		stop:    Fn.noop,
+		destroy: Fn.noop,
+
 		automate: function(time, name, value, curve, duration) {
 			var param = getObjectParam(this, name);
 
@@ -495,23 +499,11 @@
 			var events = getParamEvents(param);
 			if (!events) { return; }
 			return getValueAtTime(events, time);
-		},
-
-		destroy: noop
+		}
 	});
 
 	assign(AudioObject, {
 		debug: true,
-
-		// Constants
-
-		dB6:  1/2,
-		dB12: 1/4,
-		dB18: 1/8,
-		dB24: 1/16,
-		dB48: 1/256,
-		dB60: 1/1024,
-		dB96: 1/65536,
 
 		// Functions
 
@@ -525,6 +517,11 @@
 		isAudioNode:    isAudioNode,
 		isAudioParam:   isAudioParam,
 		isAudioObject:  isAudioObject,
+
+		levelTodB: function(value) {},
+		dBToLevel: function(dB) { return Math.pow(2, dB/6); },
+		numberToFrequency: Music.numberToFrequency,
+		frequencyToNumber: Music.frequencyToNumber,
 
 		features: {
 			disconnectParameters: testDisconnectParameters()
