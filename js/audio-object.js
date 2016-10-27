@@ -15,6 +15,7 @@
 	// Import
 	
 	var Fn     = window.Fn;
+	var Music  = window.Music;
 	var assign = Object.assign;
 
 
@@ -133,8 +134,6 @@
 		}
 	};
 
-	var paramEvents = new WeakMap();
-
 	function getValueBetweenEvents(event1, event2, time) {
 		var curve  = event2[2];
 		return curves[curve](event1[1], event2[1], event1[0], event2[0], time, event1[3]);
@@ -193,8 +192,7 @@
 	function automateParamEvents(param, events, time, value, curve, duration) {
 		curve = curve || "step";
 
-		var audio = param.context;
-		var n     = events.length;
+		var n = events.length;
 
 		while (events[--n] && events[n][0] >= time);
 
@@ -344,7 +342,6 @@
 	var inputs       = new WeakMap();
 	var outputs      = new WeakMap();
 	var objectParams = new WeakMap();
-	var automatorMap = new WeakMap();
 
 	function defineInputs(object, properties) {
 		var map = inputs.get(object);

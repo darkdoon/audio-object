@@ -4,9 +4,8 @@
 	var AudioObject = window.AudioObject;
 	var assign = Object.assign;
 
-	var dB48 = AudioObject.dBToLevel(-48);
-	var dB60 = AudioObject.dBToLevel(-60);
-	var dB96 = AudioObject.dBToLevel(-96);
+
+	// Define
 
 	var defaults = {
 		gain:      0.25,
@@ -14,12 +13,16 @@
 		resonance: 22
 	};
 
+	var dB48 = AudioObject.dBToLevel(-48);
+
+
+	// Tick
+
 	function Tick(audio, options) {
 		if (!Tick.prototype.isPrototypeOf(this)) {
 			return new Tick(audio, settings);
 		}
 
-		var metronome  = this;
 		var settings   = assign({}, Tick.defaults, options);
 
 		var oscillator = audio.createOscillator();
