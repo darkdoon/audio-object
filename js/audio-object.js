@@ -173,12 +173,10 @@
 		// but FF refuses to allow AudioParams as WeakMap keys. So... lets use
 		// an expando *sigh*.
 
-		//var events = paramEvents.get(param);
 		var events = param.audioObjectEvents;
 
 		if (!events) {
 			events = [[0, param.value, 'step']];
-			//paramEvents.set(param, events);
 			param.audioObjectEvents = events;
 		}
 
@@ -256,7 +254,7 @@
 
 		var defaultDuration = isDefined(data.duration) ? data.duration : defaults.duration ;
 		var defaultCurve = data.curve || defaults.curve ;
-		var value = param ? param.value : data.value || 0 ;
+		var value  = param ? param.value : data.value || 0 ;
 		var events = param ? getParamEvents(param) : [[0, value, 'step']];
 
 		function set(value, time, curve, duration) {
@@ -391,13 +389,10 @@
 		// Todo: I would love to use a WeakMap to store data about AudioParams,
 		// but FF refuses to allow AudioParams as WeakMap keys. So... lets use
 		// an expando *sigh*. At least it'll be fast.
-		
-		//automatorMap.set(param, fn);
 		param.audioObjectAutomateFn = fn;
 	}
 
 	function getAutomate(param, name) {
-		//return automatorMap.get(param);
 		return param.audioObjectAutomateFn;
 	}
 
