@@ -62,6 +62,17 @@
 			gain.gain.linearRampToValueAtTime(0, time + decay * 1.25);
 		}
 
+		function stop(time, decay) {
+			oscillator.frequency.cancelScheduledValues(time);
+			filter.frequency.cancelScheduledValues(time);
+			filter.Q.cancelScheduledValues(time);
+			filter.Q.linearRampToValueAtTime(0, time + decay);
+			gain.gain.cancelScheduledValues(time);
+			// Todo: work out the gradient of the exponential at time + decay,
+			// us it to schedule the linear ramp of the same gradient.
+			gain.gain.linearRampToValueAtTime(0, time + decay * 1.25);
+		}
+
 		oscillator.type = 'square';
 		oscillator.start();
 		oscillator.connect(filter);
@@ -83,6 +94,10 @@
 		this.start = function(time, number, level) {
 			var frequency = AudioObject.numberToFrequency(number);
 			tick(time || audio.currentTime, frequency, level, this.decay, this.resonance);
+		};
+
+		this.stop = function(time) {
+			stop(time || audio.currentTime, this.decay);
 		};
 
 		this.destroy = function() {
