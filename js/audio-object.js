@@ -67,8 +67,10 @@
 			// This will error if disconnect(parameters) is supported
 			// because it is not connected to audio destination.
 			audio.createGain().disconnect(audio.destination);
+			audio.close();
 			return false;
 		} catch (error) {
+			audio.close();
 			return true;
 		}
 	}
@@ -495,19 +497,19 @@
 
 		// Functions
 
-		defineInputs: defineInputs,
-		defineOutputs: defineOutputs,
+		defineInputs:      defineInputs,
+		defineOutputs:     defineOutputs,
 		defineAudioProperty: defineAudioProperty,
 		defineAudioProperties: defineAudioProperties,
-		getInput:       getInput,
-		getOutput:      getOutput,
-		isAudioContext: isAudioContext,
-		isAudioNode:    isAudioNode,
-		isAudioParam:   isAudioParam,
-		isAudioObject:  isAudioObject,
+		getInput:          getInput,
+		getOutput:         getOutput,
+		isAudioContext:    isAudioContext,
+		isAudioNode:       isAudioNode,
+		isAudioParam:      isAudioParam,
+		isAudioObject:     isAudioObject,
 
-		levelTodB: function(value) {},
-		dBToLevel: function(dB) { return Math.pow(2, dB/6); },
+		levelTodB:         function(value) {},
+		dBToLevel:         function(dB) { return Math.pow(2, dB/6); },
 		numberToFrequency: Music.numberToFrequency,
 		frequencyToNumber: Music.frequencyToNumber,
 
