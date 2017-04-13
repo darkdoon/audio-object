@@ -4,6 +4,7 @@
 	var Fn          = window.Fn;
 	var Music       = window.Music;
 	var AudioObject = window.AudioObject;
+	var Pool        = window.Pool;
 	var observe     = window.observe;
 	var assign      = Object.assign;
 
@@ -143,7 +144,7 @@
 
 	// Filter
 
-	var Filter = Fn.Pool({
+	var Filter = Pool({
 		name: 'Sampler Filter',
 
 		create: function create(audio, destination, object, q, frequency) {
@@ -219,7 +220,7 @@
 
 	// Voice
 
-	var Voice = Fn.Pool({
+	var Voice = Pool({
 		name: 'Sampler Voice',
 
 		create: function create(audio, buffer, loop, destination, options) {

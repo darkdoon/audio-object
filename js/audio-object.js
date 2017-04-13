@@ -524,13 +524,13 @@
 			disconnectParameters: testDisconnectParameters()
 		},
 
-		fetchBuffer: Fn.cacheCurry(function fetchBuffer(audio, url) {
+		fetchBuffer: Fn.curry(function fetchBuffer(audio, url) {
 			return fetch(url).then(function(response) {
 				return new Promise(function(accept, reject) {
 					audio.decodeAudioData(response, accept, reject);
 				});
 			});
-		}),
+		}, 2, false),
 
 		UnityNode: Fn.cache(UnityNode)
 	});
