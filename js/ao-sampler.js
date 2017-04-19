@@ -2,8 +2,10 @@
 	"use strict";
 	
 	var Fn          = window.Fn;
+	var get         = Fn.get;
 	var Music       = window.Music;
 	var AudioObject = window.AudioObject;
+	var UnityNode   = AudioObject.UnityNode;
 	var Pool        = window.Pool;
 	var observe     = window.observe;
 	var assign      = Object.assign;
@@ -349,7 +351,7 @@
 		var object = this;
 		var regions;
 
-		var unityNode  = AudioObject.UnityNode(audio);
+		var unityNode  = UnityNode(audio);
 		var pitchNode  = audio.createGain();
 		//var detuneNode = audio.createGain();
 		var frequency  = audio.createGain();
@@ -475,7 +477,7 @@
 			packets.length = 0;
 
 			var packet = filters[number];
-			if (!Fn.get('length', packet)) { return this; }
+			if (!get('length', packet)) { return this; }
 			var filter = packet[0];
 			filter.stop(time || audio.currentTime);
 			packet.length = 0;
@@ -507,4 +509,4 @@
 	Sampler.prototype = Object.create(AudioObject.prototype);
 
 	AudioObject.Sampler = Sampler;
-})(window);
+})(this);

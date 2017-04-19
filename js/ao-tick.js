@@ -1,8 +1,14 @@
 (function(window) {
 	"use strict";
 
+	// Import
+
 	var AudioObject = window.AudioObject;
-	var assign = Object.assign;
+	var Fn          = window.Fn;
+
+	var assign      = Object.assign;
+	var todB        = Fn.todB;
+	var toLevel     = Fn.toLevel;
 
 
 	// Define
@@ -13,7 +19,7 @@
 		resonance: 22
 	};
 
-	var dB48 = AudioObject.dBToLevel(-48);
+	var dB48 = toLevel(-48);
 
 
 	// Tick
@@ -93,11 +99,8 @@
 		};
 	}
 
-	Tick.prototype = Object.create(AudioObject.prototype);
-	Tick.defaults = defaults;
-
 	// Export
-
+	Tick.prototype = AudioObject.prototype;
+	Tick.defaults = defaults;
 	AudioObject.Tick = Tick;
-
 })(this);

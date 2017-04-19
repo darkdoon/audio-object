@@ -1,10 +1,6 @@
 (function(window) {
 	if (!window.console || !window.console.log) { return; }
-
-	console.log('AudioObject');
-	console.log('http://github.com/soundio/audio-object');
-	//console.log('A wrapper for Web Audio sub-graphs');
-	console.log('______________________________________');
+	console.log('AudioObject - http://github.com/soundio/audio-object');
 })(window);
 
 (function(window) {
@@ -15,6 +11,8 @@
 	// Import
 	
 	var Fn     = window.Fn;
+	var cache  = Fn.cache;
+	var curry  = Fn.curry;
 	var Music  = window.Music;
 	var assign = Object.assign;
 
@@ -457,9 +455,9 @@
 	}
 
 	assign(AudioObject.prototype, {
-		start:   Fn.noop,
-		stop:    Fn.noop,
-		destroy: Fn.noop,
+		start:   noop,
+		stop:    noop,
+		destroy: noop,
 
 		automate: function(time, name, value, curve, duration) {
 			var param = getObjectParam(this, name);
@@ -499,24 +497,64 @@
 		}
 	});
 
+
+	// Handle user media streams
+
+	var streamRequest;
+	var mediaRequests = new WeakMap();
+
+	function requestStream() {
+		if (!streamRequest) {
+			streamRequest = new Promise(function(accept, reject) {
+				return navigator.getUserMedia ?
+					navigator.getUserMedia({
+						audio: { optional: [{ echoCancellation: false }] }
+					}, accept, reject) :
+					reject({
+						message: 'navigator.getUserMedia: ' + !!navigator.getUserMedia
+					});
+			});
+		}
+
+		return streamRequest;
+	}
+
+	function requestMedia(audio) {
+		var request = mediaRequests.get(audio);
+
+		if (!request) {
+			request = requestStream().then(function(stream) {
+				var source       = audio.createMediaStreamSource(stream);
+				var channelCount = source.channelCount;
+				var splitter     = audio.createChannelSplitter(channelCount);
+
+				source.connect(splitter);
+				return splitter;
+			});
+
+			mediaRequests.set(audio, request);
+		}
+
+		return request;
+	}
+
 	assign(AudioObject, {
 		debug: true,
 
 		// Functions
 
-		defineInputs: defineInputs,
-		defineOutputs: defineOutputs,
+		defineInputs:      defineInputs,
+		defineOutputs:     defineOutputs,
 		defineAudioProperty: defineAudioProperty,
 		defineAudioProperties: defineAudioProperties,
-		getInput:       getInput,
-		getOutput:      getOutput,
-		isAudioContext: isAudioContext,
-		isAudioNode:    isAudioNode,
-		isAudioParam:   isAudioParam,
-		isAudioObject:  isAudioObject,
+		getInput:          getInput,
+		getOutput:         getOutput,
+		isAudioContext:    isAudioContext,
+		isAudioNode:       isAudioNode,
+		isAudioParam:      isAudioParam,
+		isAudioObject:     isAudioObject,
+		requestMedia:      requestMedia,
 
-		levelTodB: function(value) {},
-		dBToLevel: function(dB) { return Math.pow(2, dB/6); },
 		numberToFrequency: Music.numberToFrequency,
 		frequencyToNumber: Music.frequencyToNumber,
 
@@ -524,7 +562,7 @@
 			disconnectParameters: testDisconnectParameters()
 		},
 
-		fetchBuffer: Fn.curry(function fetchBuffer(audio, url) {
+		fetchBuffer: curry(function fetchBuffer(audio, url) {
 			return fetch(url).then(function(response) {
 				return new Promise(function(accept, reject) {
 					audio.decodeAudioData(response, accept, reject);
@@ -532,7 +570,7 @@
 			});
 		}, 2, false),
 
-		UnityNode: Fn.cache(UnityNode)
+		UnityNode: cache(UnityNode)
 	});
 
 	Object.defineProperty(AudioObject, 'minExponentialValue', {
@@ -541,4 +579,4 @@
 	});
 
 	window.AudioObject = AudioObject;
-})(window);
+})(this);
