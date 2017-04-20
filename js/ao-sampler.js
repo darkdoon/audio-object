@@ -3,6 +3,10 @@
 	
 	var Fn          = window.Fn;
 	var get         = Fn.get;
+	var invoke      = Fn.invoke;
+	var noop        = Fn.noop;
+	var nothing     = Fn.nothing;
+
 	var Music       = window.Music;
 	var AudioObject = window.AudioObject;
 	var UnityNode   = AudioObject.UnityNode;
@@ -11,6 +15,8 @@
 	var assign      = Object.assign;
 
 	var debug       = true;
+
+	var dummyNote   = { stop: noop };
 
 	// Ignore any notes that have a region gain less than -60dB. This does not
 	// stop you from playing soft – region gain is multiplied by velocity gain –
@@ -65,6 +71,7 @@
 		//"release-scale-from-note":    0,
 	};
 
+	var get1 = get(1);
 
 	function isDefined(val) {
 		return val !== undefined && val !== null;
@@ -202,20 +209,39 @@
 		},
 
 		stop: function(time, decay) {
-			// setTargetAtTime reduces the value exponentially according to the
-			// decay. If we set the timeout to decay x 11 we can be pretty sure
-			// the value is down at least -96dB.
-			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+			// It hasn't played yet, but it is scheduled. Silence it by
+			// disconnecting it.
+			//if (time <= this.startTime) {
+			//	this.filter.Q.cancelScheduledValues(this.startTime);
+			//	this.filter.Q.setValueAtTime(0, this.startTime);
+			//	this.envelopeGain.gain.cancelScheduledValues(this.startTime);
+			//	this.envelopeGain.gain.setValueAtTime(0, this.startTime);
+			//	this.stopTime = this.startTime;
+			//}
+			//else {
+				// setTargetAtTime reduces the value exponentially according to the
+				// decay. If we set the timeout to decay x 11 we can be pretty sure
+				// the value is down at least -96dB.
+				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+	
+				decay = decay || 0.08;
+				this.stopTime = time + Math.ceil(decay * 11);
+				
+				// Reset Q now to prevent it ringing? No? Let Q ring?
+				this.filter.Q.setValueAtTime(0, this.stopTime);
+	
+				//this.envelope.gain.setValueAtTime(0, time);
+				//this.noteGain.gain.setValueAtTime(1, time);
+				//this.velocityMultiplier.gain.setValueAtTime(1 + velocityFollow * velocityFactor, time);
+			//}
+		},
 
-			decay = decay || 0.08;
-			this.stopTime = time + Math.ceil(decay * 11);
-			
-			// Reset Q now to prevent it ringing? No? Let Q ring?
-			this.filter.Q.setValueAtTime(0, this.stopTime);
-
-			//this.envelope.gain.setValueAtTime(0, time);
-			//this.noteGain.gain.setValueAtTime(1, time);
-			//this.velocityMultiplier.gain.setValueAtTime(1 + velocityFollow * velocityFactor, time);
+		cancel: function() {
+			this.filter.Q.cancelScheduledValues(this.startTime);
+			this.filter.Q.setValueAtTime(0, this.startTime);
+			this.envelopeGain.gain.cancelScheduledValues(this.startTime);
+			this.envelopeGain.gain.setValueAtTime(0, this.startTime);
+			this.stopTime = this.startTime;
 		}
 	});
 
@@ -260,13 +286,31 @@
 		},
 
 		stop: function(time, decay) {
-			// setTargetAtTime reduces the value exponentially according to the
-			// decay. If we set the timeout to decay x 11 we can be pretty sure
-			// the value is down at least -96dB.
-			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-			this.stopTime = time + Math.ceil(decay * 11);
-			this.gain.gain.setTargetAtTime(0, time, decay);
-			this.source.stop(this.stopTime);
+			// It hasn't played yet, but it is scheduled. Silence it by
+			// disconnecting it.
+			//if (time <= this.startTime) {
+			//	this.gain.gain.cancelScheduledValues(this.startTime);
+			//	this.gain.gain.setValueAtTime(0, this.startTime);
+			//	this.source.stop(this.startTime);
+			//	this.stopTime = this.startTime;
+			//}
+			//else {
+				// setTargetAtTime reduces the value exponentially according to the
+				// decay. If we set the timeout to decay x 11 we can be pretty sure
+				// the value is down at least -96dB.
+				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+				this.stopTime = time + Math.ceil(decay * 11);
+				this.gain.gain.setTargetAtTime(0, time, decay);
+				this.source.stop(this.stopTime);
+			//}
+		},
+
+		cancel: function() {
+			this.gain.disconnect();
+			this.gain.gain.cancelScheduledValues(this.startTime);
+			this.gain.gain.setValueAtTime(0, this.startTime);
+			this.source.stop(this.startTime);
+			this.stopTime = this.startTime;
 		}
 	});
 
@@ -279,8 +323,9 @@
 		var currentNodes = notes[number].slice();
 		var n = regions.length;
 		var minMute = Infinity;
-		var region, regionGain, regionDetune, buffer, note, filter, sensitivity, velocityGain,
+		var region, regionGain, regionDetune, buffer, voice, filter, sensitivity, velocityGain,
 			noteFollow, noteFactor, veloFollow;
+		var voices = [];
 
 		// Empty the array ready for the new packets
 		notes[number].length = 0;
@@ -323,22 +368,38 @@
 			velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
 			regionDetune = rangeDetune(region, number);
 
-			note = Voice(audio, buffer, region.loop, destination, options);
-			note.start(time, regionGain * velocityGain, regionDetune);
+			voice = Voice(audio, buffer, region.loop, destination, options);
+			voice.start(time, regionGain * velocityGain, regionDetune);
+			voices.push([region, voice]);
 
 			// Store the region and associated nodes, that we may
 			// dispose of them elegantly later.
-			notes[number].push([region, note]);
+			notes[number].push([region, voice]);
 
 			if (isDefined(region.muteDecay) && region.muteDecay < minMute) {
 				minMute = region.muteDecay;
 			}
 		}
 
+		if (voices.length === 0) {
+			return dummyNote;
+		}
+
 		if (minMute < Infinity) {
 			// Mute nodes currently playing at this number
 			muteNote(time, currentNodes, minMute);
 		}
+
+		return {
+			stop: function(time, name) {
+				dampNote(time, voices);
+				if (filter) { filter.stop(time); }
+			},
+
+			cancel: function() {
+				voices.map(get1).forEach(invoke('cancel', nothing));
+			}
+		};
 	}
 
 	function Sampler(audio, settings, presets) {
@@ -456,11 +517,11 @@
 			if (velocity === 0) { return; }
 
 			if (!notes[number]) { notes[number] = []; }
-			start(time, number, velocity, audio, this, output, regions, notes, filters, frequency, q, buffers, options);
-			return this;
+			return start(time, number, velocity, audio, this, output, regions, notes, filters, frequency, q, buffers, options);
 		};
 
 		this.stop = function stop(time, number) {
+console.log('STTTTOOOOOPPPPPPPP Nothing should get in here now.');
 			// If no number given, stop all notes
 			if (arguments.length === 1) {
 				for (number of Object.keys(notes)) {
