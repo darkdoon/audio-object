@@ -79,6 +79,14 @@
 	// AudioNode
 
 	function UnityNode(audio) {
+		var node;
+
+		if (audio.createConstantSource) {			
+			node = audio.createConstantSource();
+			node.offset.value = 1;
+			return node;
+		}
+
 		var oscillator = audio.createOscillator();
 		var waveshaper = audio.createWaveShaper();
 	
@@ -93,6 +101,7 @@
 	
 		return waveshaper;
 	}
+
 
 	// AudioParam
 

@@ -305,11 +305,11 @@
 			//}
 		},
 
-		cancel: function() {
+		cancel: function(time) {
 			this.gain.disconnect();
-			this.gain.gain.cancelScheduledValues(this.startTime);
-			this.gain.gain.setValueAtTime(0, this.startTime);
-			this.source.stop(this.startTime);
+			this.gain.gain.cancelScheduledValues(time);
+			this.gain.gain.setValueAtTime(0, time);
+			this.source.stop(time);
 			this.stopTime = this.startTime;
 		}
 	});
@@ -318,13 +318,14 @@
 	// Sampler
 
 	function start(time, number, velocity, audio, object, destination, regions, notes, filters, frequency, q, buffers, options) {
+		
 		// Store the currently playing nodes until we know
 		// how quickly they should be muted.
 		var currentNodes = notes[number].slice();
 		var n = regions.length;
 		var minMute = Infinity;
 		var region, regionGain, regionDetune, buffer, voice, filter, sensitivity, velocityGain,
-			noteFollow, noteFactor, veloFollow;
+			noteFollow, noteFactor, veloFollow, entry;
 		var voices = [];
 
 		// Empty the array ready for the new packets
@@ -370,20 +371,19 @@
 
 			voice = Voice(audio, buffer, region.loop, destination, options);
 			voice.start(time, regionGain * velocityGain, regionDetune);
-			voices.push([region, voice]);
+			entry = [region, voice];
+			voices.push(entry);
 
 			// Store the region and associated nodes, that we may
 			// dispose of them elegantly later.
-			notes[number].push([region, voice]);
+			notes[number].push(entry);
 
 			if (isDefined(region.muteDecay) && region.muteDecay < minMute) {
 				minMute = region.muteDecay;
 			}
 		}
 
-		if (voices.length === 0) {
-			return dummyNote;
-		}
+		if (voices.length === 0) { return; }
 
 		if (minMute < Infinity) {
 			// Mute nodes currently playing at this number
@@ -393,11 +393,40 @@
 		return {
 			stop: function(time, name) {
 				dampNote(time, voices);
+
+				// Remove entries for these voices - although this prevents us
+				// being able to mute them during damping phase, and we may want
+				// an additional buffer to handle that.
+
+				var packets = notes[number];
+				var i, voice;
+
+				if (packets) {
+					for (voice of voices) {
+						i = packets.indexOf(voice);
+						if (i > -1) {
+							packets.splice(i, 1);
+						}
+					}
+				}
+
 				if (filter) { filter.stop(time); }
 			},
 
-			cancel: function() {
-				voices.map(get1).forEach(invoke('cancel', nothing));
+			cancel: function(time) {
+				voices.map(get1).forEach(invoke('cancel', arguments));
+
+				var packets = notes[number];
+				var i, voice;
+
+				if (packets) {
+					for (voice of voices) {
+						i = packets.indexOf(voice);
+						if (i > -1) {
+							packets.splice(i, 1);
+						}
+					}
+				}
 			}
 		};
 	}
@@ -515,13 +544,12 @@
 			time = time || audio.currentTime;
 
 			if (velocity === 0) { return; }
-
 			if (!notes[number]) { notes[number] = []; }
+
 			return start(time, number, velocity, audio, this, output, regions, notes, filters, frequency, q, buffers, options);
 		};
 
 		this.stop = function stop(time, number) {
-console.log('STTTTOOOOOPPPPPPPP Nothing should get in here now.');
 			// If no number given, stop all notes
 			if (arguments.length === 1) {
 				for (number of Object.keys(notes)) {
