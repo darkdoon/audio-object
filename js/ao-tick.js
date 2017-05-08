@@ -1,12 +1,14 @@
 (function(window) {
 	"use strict";
 
+
 	// Import
 
 	var AudioObject = window.AudioObject;
 	var Fn          = window.Fn;
 
 	var assign      = Object.assign;
+	var noop        = Fn.noop;
 	var todB        = Fn.todB;
 	var toLevel     = Fn.toLevel;
 
@@ -20,13 +22,14 @@
 	};
 
 	var dB48 = toLevel(-48);
+	var dummy = { stop: noop };
 
 
 	// Tick
 
 	function Tick(audio, options) {
 		if (!Tick.prototype.isPrototypeOf(this)) {
-			return new Tick(audio, settings);
+			return new Tick(audio, options);
 		}
 
 		var settings   = assign({}, Tick.defaults, options);
@@ -69,6 +72,7 @@
 		}
 
 		oscillator.type = 'square';
+		oscillator.frequency.setValueAtTime(300, audio.currentTime);
 		oscillator.start();
 		oscillator.connect(filter);
 
@@ -89,6 +93,7 @@
 		this.start = function(time, number, level) {
 			var frequency = AudioObject.numberToFrequency(number);
 			tick(time || audio.currentTime, frequency, level, this.decay, this.resonance);
+			return dummy;
 		};
 
 		this.destroy = function() {
@@ -99,8 +104,12 @@
 		};
 	}
 
+
 	// Export
+
 	Tick.prototype = AudioObject.prototype;
+	Tick.prototype.stop = noop;
+
 	Tick.defaults = defaults;
 	AudioObject.Tick = Tick;
 })(this);

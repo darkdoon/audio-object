@@ -69,8 +69,10 @@
 			// This will error if disconnect(parameters) is supported
 			// because it is not connected to audio destination.
 			audio.createGain().disconnect(audio.destination);
+			audio.close();
 			return false;
 		} catch (error) {
+			audio.close();
 			return true;
 		}
 	}
