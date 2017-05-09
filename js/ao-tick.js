@@ -101,7 +101,10 @@
 		};
 
 		this.stop = function(time) {
-			unschedule(time, this.decay);
+			// Don't. It's causing problems. I think we'll simply live with the
+			// fact that the metronome doesn't stop immediately when you stop
+			// the sequencer. 
+			//unschedule(time, this.decay);
 			return this;
 		};
 
