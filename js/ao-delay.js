@@ -5,7 +5,7 @@
 	var AudioObject = window.AudioObject;
 	var defaults = { maxDelay: 1, delay: 0 };
 
-	function Delay(audio, settings, clock) {
+	function Delay(audio, settings, sequencer) {
 		var options = assign({}, defaults, settings);
 		var node = audio.createDelay(options.maxDelay);
 

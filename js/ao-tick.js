@@ -39,7 +39,7 @@
 		var gain       = audio.createGain();
 		var output     = audio.createGain();
 
-		function tick(time, frequency, level, decay, resonance) {
+		function schedule(time, frequency, level, decay, resonance) {
 			var attackTime = time > 0.002 ? time - 0.002 : 0 ;
 
 			// Todo: Feature test setTargetAtTime in the AudioObject namespace.
@@ -71,6 +71,10 @@
 			gain.gain.linearRampToValueAtTime(0, time + decay * 1.25);
 		}
 
+		function unschedule(time, decay) {
+			gain.gain.cancelScheduledValues(time + decay * 1.25);
+		}
+
 		oscillator.type = 'square';
 		oscillator.frequency.setValueAtTime(300, audio.currentTime);
 		oscillator.start();
@@ -92,8 +96,13 @@
 
 		this.start = function(time, number, level) {
 			var frequency = AudioObject.numberToFrequency(number);
-			tick(time || audio.currentTime, frequency, level, this.decay, this.resonance);
-			return dummy;
+			schedule(time || audio.currentTime, frequency, level, this.decay, this.resonance);
+			return this;
+		};
+
+		this.stop = function(time) {
+			unschedule(time, this.decay);
+			return this;
 		};
 
 		this.destroy = function() {

@@ -257,6 +257,7 @@
 		},
 
 		reset: function reset(audio, buffer, loop, destination, options) {
+			this.source && this.source.disconnect();
 			this.source = audio.createBufferSource();
 			this.source.buffer = buffer;
 			this.source.loop = loop;
@@ -431,7 +432,7 @@
 		};
 	}
 
-	function Sampler(audio, settings, presets) {
+	function Sampler(audio, settings, sequencer, presets) {
 		if (!AudioObject.isAudioObject(this)) {
 			return new Sampler(audio, settings, presets);
 		}
