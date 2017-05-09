@@ -38,6 +38,12 @@
 		var filter     = audio.createBiquadFilter();
 		var gain       = audio.createGain();
 		var output     = audio.createGain();
+		var merger     = audio.createChannelMerger(2);
+
+		oscillator.channelCount = 1;
+		filter.channelCount     = 1;
+		gain.channelCount       = 1;
+		output.channelCount     = 1;
 
 		function schedule(time, frequency, level, decay, resonance) {
 			var attackTime = time > 0.002 ? time - 0.002 : 0 ;
@@ -84,9 +90,11 @@
 
 		gain.gain.value = 0;
 		gain.connect(output);
+		output.connect(merger, 0, 0);
+		output.connect(merger, 0, 1);
 
 		// Initialise as AudioObject
-		AudioObject.call(this, audio, undefined, output, {
+		AudioObject.call(this, audio, undefined, merger, {
 			gain: output.gain
 		});
 
