@@ -355,7 +355,7 @@
 			buffer = buffers[n];
 
 			if (!buffer) {
-				console.log('AO Sampler: No buffer for region', n, region.url);
+//				console.log('AO Sampler: No buffer for region', n, region.url);
 				continue;
 			}
 

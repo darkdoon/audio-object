@@ -20,7 +20,7 @@
 		});
 	}
 
-	Delay.prototype = Obect.create(AudioObject.prototype);
+	Delay.prototype = Object.create(AudioObject.prototype);
 
 	AudioObject.Delay = Delay;
 })(this);
