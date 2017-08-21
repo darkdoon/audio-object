@@ -1,6 +1,6 @@
 # AudioObject
 A wrapper for a graph of AudioNodes that exposes AudioParam values as
-getter/setters on an plain ol' object. An AudioObject can serve as an
+getter/setters on an plain ol' JS object. An AudioObject can serve as an
 observable, JSONifiable model of an audio sub-graph – an audio 'plugin'
 – in an app.
 
@@ -10,7 +10,7 @@ audio param value at the browser frame rate. Changes are
 where the getter/setter is redefined).
 
 
-## AudioObject(context, input, output, params)
+### `AudioObject(context, input, output, params)`
 
 Here is an example of a compressor and a gain wrapped into a single
 audio object:
@@ -62,7 +62,7 @@ To read more about what can be passed into <code>AudioObject()</code> as
 <a href="#audioobjectdefineaudiopropertiesobject-audiocontext-audioparams">AudioObject.defineAudioProperties()</a>.
 
 
-### Instance methods
+#### Instance methods
 
 An instance of AudioObject has the methods <code>.automate()</code> and
 <code>.destroy()</code>.
@@ -90,7 +90,7 @@ Connects the output named <code>outputName</code> to <code>destination</code>'s
 
 Input and output names were defined when the AudioObject was first constructed.
 
-#### .disconnect()
+##### `disconnect()`
 
 A bit like a Web Audio node's <code>.disconnect()</code> method, although it
 disconnects AudioObjects as well as AudioNodes.
@@ -111,7 +111,7 @@ Disconnects output <code>outputName</code> from <code>destination</code>'s
 
 Input and output names were defined when the AudioObject was first constructed. -->
 
-#### .automate(name, time, value, curve, duration)
+##### `automate(name, time, value, curve, duration)`
 
 Automate a property. The property <code>name</code> will ramp to <code>value</code>
 from it's current value over <code>duration</code> (in seconds). The optional
@@ -129,7 +129,7 @@ exponential curves, an audioObject will accept a zero value. It exponentially
 automates to as near zero as possible and sets <code>0</code> at the end of the
 ramp. Negative values are still a no-no.
 
-#### .destroy()
+##### `destroy()`
 
 Destroy is a noop by default. It should be overidden so that it destroys the nodes
 in the audioObject's audio graph.
@@ -139,7 +139,7 @@ in the audioObject's audio graph.
 
 ### AudioObject functions
 
-#### .automate(param, time, value, curve, duration)
+##### `automate(param, time, value, curve, duration)`
 
 Automates a value change on an AudioParam.
 
@@ -157,15 +157,7 @@ Automates a value change on an AudioParam.
 
 returns <code>undefined</code>.
 
-#### .truncate(param, time)
-
-Truncates automation events on <code>param</code> after <code>time</code>. The
-value of the param at truncate time is kept by rescheduling in-progress linear
-or exponential curves or setting a value during the tail of decay curves.
-
-returns <code>undefined</code>.
-
-#### .valueAtTime(param, time)
+##### `valueAtTime(param, time)`
 
 Returns the value of <code>param</code> at <code>time</code>.
 
@@ -177,7 +169,7 @@ Get the current connection state of any AudioObject:
 
 returns <code>connections</code> object. -->
 
-#### .defineAudioProperties(object, audioContext, audioParams)
+##### `defineAudioProperties(object, audioContext, audioParams)`
 
 <code>.defineAudioProperties()</code> takes a map of audio params and defines
 properties on <code>object</code> that are bound to the values of those params.
@@ -226,14 +218,14 @@ with that.
 
 Returns <code>object</code>.
 
-#### .defineAudioProperty(object, name, audioContext, audioParam)
+##### `defineAudioProperty(object, name, audioContext, audioParam)`
 
 As <code>.defineAudioProperties()</code>, but defines a single property with
 name <code>name</code>.
 
 Returns <code>object</code>.
 
-#### .isAudioObject(object)
+##### `isAudioObject(object)`
 
 Returns <code>true</code> if <code>object</code> is an has <code>AudioObject.prototype</code>
 in it's prototype chain.
@@ -241,7 +233,7 @@ in it's prototype chain.
 
 ### AudioObject properties
 
-#### .features
+##### `features`
 
 A key-value store of results from feature tests in the browser. Currently there is
 one feature test, <code>disconnectParameters</code>:
