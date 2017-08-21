@@ -1,6 +1,7 @@
-import AudioObject from './audio-object.js';
+//import AudioObject from './audio-object.js';
 
-const assign = Object.assign;
+const Audioobject = window.AudioObject;
+const assign      = Object.assign;
 
 function Module(audio, settings, sequencer) {
 	this.start = function(time, name, velocity) {
