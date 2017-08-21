@@ -1,4 +1,4 @@
-import AudioObject from './audio-object';
+import AudioObject from './audio-object.js';
 
 const assign = Object.assign;
 
