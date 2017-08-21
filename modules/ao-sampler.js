@@ -1,18 +1,20 @@
-import AudioObject from './audio-object';
+//import AudioObject from './audio-object';
 
 const DEBUG       = window.DEBUG;
 
+const AudioObject = window.AudioObject;
 const Fn          = window.Fn;
+const Music       = window.Music;
+const Pool        = window.Pool;
+const observe     = window.observe;
+
+const assign      = Object.assign;
 const get         = Fn.get;
 const invoke      = Fn.invoke;
 const noop        = Fn.noop;
 const nothing     = Fn.nothing;
 
-const Music       = window.Music;
 const UnityNode   = AudioObject.UnityNode;
-const Pool        = window.Pool;
-const observe     = window.observe;
-const assign      = Object.assign;
 
 const dummyNote   = { stop: noop };
 
