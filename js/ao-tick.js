@@ -1,8 +1,16 @@
 (function(window) {
 	"use strict";
 
+
+	// Import
+
 	var AudioObject = window.AudioObject;
-	var assign = Object.assign;
+	var Fn          = window.Fn;
+
+	var assign      = Object.assign;
+	var noop        = Fn.noop;
+	var todB        = Fn.todB;
+	var toLevel     = Fn.toLevel;
 
 
 	// Define
@@ -13,14 +21,15 @@
 		resonance: 22
 	};
 
-	var dB48 = AudioObject.dBToLevel(-48);
+	var dB48 = toLevel(-48);
+	var dummy = { stop: noop };
 
 
 	// Tick
 
 	function Tick(audio, options) {
 		if (!Tick.prototype.isPrototypeOf(this)) {
-			return new Tick(audio, settings);
+			return new Tick(audio, options);
 		}
 
 		var settings   = assign({}, Tick.defaults, options);
@@ -29,8 +38,14 @@
 		var filter     = audio.createBiquadFilter();
 		var gain       = audio.createGain();
 		var output     = audio.createGain();
+		var merger     = audio.createChannelMerger(2);
 
-		function tick(time, frequency, level, decay, resonance) {
+		oscillator.channelCount = 1;
+		filter.channelCount     = 1;
+		gain.channelCount       = 1;
+		output.channelCount     = 1;
+
+		function schedule(time, frequency, level, decay, resonance) {
 			var attackTime = time > 0.002 ? time - 0.002 : 0 ;
 
 			// Todo: Feature test setTargetAtTime in the AudioObject namespace.
@@ -62,18 +77,12 @@
 			gain.gain.linearRampToValueAtTime(0, time + decay * 1.25);
 		}
 
-		function stop(time, decay) {
-			oscillator.frequency.cancelScheduledValues(time);
-			filter.frequency.cancelScheduledValues(time);
-			filter.Q.cancelScheduledValues(time);
-			filter.Q.linearRampToValueAtTime(0, time + decay);
-			gain.gain.cancelScheduledValues(time);
-			// Todo: work out the gradient of the exponential at time + decay,
-			// us it to schedule the linear ramp of the same gradient.
-			gain.gain.linearRampToValueAtTime(0, time + decay * 1.25);
+		function unschedule(time, decay) {
+			gain.gain.cancelScheduledValues(time + decay * 1.25);
 		}
 
 		oscillator.type = 'square';
+		oscillator.frequency.setValueAtTime(300, audio.currentTime);
 		oscillator.start();
 		oscillator.connect(filter);
 
@@ -81,9 +90,11 @@
 
 		gain.gain.value = 0;
 		gain.connect(output);
+		output.connect(merger, 0, 0);
+		output.connect(merger, 0, 1);
 
 		// Initialise as AudioObject
-		AudioObject.call(this, audio, undefined, output, {
+		AudioObject.call(this, audio, undefined, merger, {
 			gain: output.gain
 		});
 
@@ -93,7 +104,16 @@
 
 		this.start = function(time, number, level) {
 			var frequency = AudioObject.numberToFrequency(number);
-			tick(time || audio.currentTime, frequency, level, this.decay, this.resonance);
+			schedule(time || audio.currentTime, frequency, level, this.decay, this.resonance);
+			return this;
+		};
+
+		this.stop = function(time) {
+			// Don't. It's causing problems. I think we'll simply live with the
+			// fact that the metronome doesn't stop immediately when you stop
+			// the sequencer. 
+			//unschedule(time, this.decay);
+			return this;
 		};
 
 		this.stop = function(time) {
@@ -108,11 +128,12 @@
 		};
 	}
 
-	Tick.prototype = Object.create(AudioObject.prototype);
-	Tick.defaults = defaults;
 
 	// Export
 
-	AudioObject.Tick = Tick;
+	Tick.prototype = AudioObject.prototype;
+	Tick.prototype.stop = noop;
 
+	Tick.defaults = defaults;
+	AudioObject.Tick = Tick;
 })(this);

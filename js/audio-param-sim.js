@@ -1,4 +1,4 @@
-(function() {
+(function(window) {
 	"use strict";
 
 	var defaults = {
@@ -46,4 +46,4 @@
 
 	AudioParamSim.prototype = prototype;
 	window.AudioParamSim = AudioParamSim;
-})();
+})(this);

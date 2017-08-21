@@ -2,12 +2,21 @@
 	"use strict";
 	
 	var Fn          = window.Fn;
+	var get         = Fn.get;
+	var invoke      = Fn.invoke;
+	var noop        = Fn.noop;
+	var nothing     = Fn.nothing;
+
 	var Music       = window.Music;
 	var AudioObject = window.AudioObject;
+	var UnityNode   = AudioObject.UnityNode;
+	var Pool        = window.Pool;
 	var observe     = window.observe;
 	var assign      = Object.assign;
 
 	var debug       = true;
+
+	var dummyNote   = { stop: noop };
 
 	// Ignore any notes that have a region gain less than -60dB. This does not
 	// stop you from playing soft – region gain is multiplied by velocity gain –
@@ -62,6 +71,7 @@
 		//"release-scale-from-note":    0,
 	};
 
+	var get1 = get(1);
 
 	function isDefined(val) {
 		return val !== undefined && val !== null;
@@ -143,7 +153,7 @@
 
 	// Filter
 
-	var Filter = Fn.Pool({
+	var Filter = Pool({
 		name: 'Sampler Filter',
 
 		create: function create(audio, destination, object, q, frequency) {
@@ -199,27 +209,46 @@
 		},
 
 		stop: function(time, decay) {
-			// setTargetAtTime reduces the value exponentially according to the
-			// decay. If we set the timeout to decay x 11 we can be pretty sure
-			// the value is down at least -96dB.
-			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+			// It hasn't played yet, but it is scheduled. Silence it by
+			// disconnecting it.
+			//if (time <= this.startTime) {
+			//	this.filter.Q.cancelScheduledValues(this.startTime);
+			//	this.filter.Q.setValueAtTime(0, this.startTime);
+			//	this.envelopeGain.gain.cancelScheduledValues(this.startTime);
+			//	this.envelopeGain.gain.setValueAtTime(0, this.startTime);
+			//	this.stopTime = this.startTime;
+			//}
+			//else {
+				// setTargetAtTime reduces the value exponentially according to the
+				// decay. If we set the timeout to decay x 11 we can be pretty sure
+				// the value is down at least -96dB.
+				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+	
+				decay = decay || 0.08;
+				this.stopTime = time + Math.ceil(decay * 11);
+				
+				// Reset Q now to prevent it ringing? No? Let Q ring?
+				this.filter.Q.setValueAtTime(0, this.stopTime);
+	
+				//this.envelope.gain.setValueAtTime(0, time);
+				//this.noteGain.gain.setValueAtTime(1, time);
+				//this.velocityMultiplier.gain.setValueAtTime(1 + velocityFollow * velocityFactor, time);
+			//}
+		},
 
-			decay = decay || 0.08;
-			this.stopTime = time + Math.ceil(decay * 11);
-			
-			// Reset Q now to prevent it ringing? No? Let Q ring?
-			this.filter.Q.setValueAtTime(0, this.stopTime);
-
-			//this.envelope.gain.setValueAtTime(0, time);
-			//this.noteGain.gain.setValueAtTime(1, time);
-			//this.velocityMultiplier.gain.setValueAtTime(1 + velocityFollow * velocityFactor, time);
+		cancel: function() {
+			this.filter.Q.cancelScheduledValues(this.startTime);
+			this.filter.Q.setValueAtTime(0, this.startTime);
+			this.envelopeGain.gain.cancelScheduledValues(this.startTime);
+			this.envelopeGain.gain.setValueAtTime(0, this.startTime);
+			this.stopTime = this.startTime;
 		}
 	});
 
 
 	// Voice
 
-	var Voice = Fn.Pool({
+	var Voice = Pool({
 		name: 'Sampler Voice',
 
 		create: function create(audio, buffer, loop, destination, options) {
@@ -228,6 +257,7 @@
 		},
 
 		reset: function reset(audio, buffer, loop, destination, options) {
+			this.source && this.source.disconnect();
 			this.source = audio.createBufferSource();
 			this.source.buffer = buffer;
 			this.source.loop = loop;
@@ -257,13 +287,31 @@
 		},
 
 		stop: function(time, decay) {
-			// setTargetAtTime reduces the value exponentially according to the
-			// decay. If we set the timeout to decay x 11 we can be pretty sure
-			// the value is down at least -96dB.
-			// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
-			this.stopTime = time + Math.ceil(decay * 11);
-			this.gain.gain.setTargetAtTime(0, time, decay);
-			this.source.stop(this.stopTime);
+			// It hasn't played yet, but it is scheduled. Silence it by
+			// disconnecting it.
+			//if (time <= this.startTime) {
+			//	this.gain.gain.cancelScheduledValues(this.startTime);
+			//	this.gain.gain.setValueAtTime(0, this.startTime);
+			//	this.source.stop(this.startTime);
+			//	this.stopTime = this.startTime;
+			//}
+			//else {
+				// setTargetAtTime reduces the value exponentially according to the
+				// decay. If we set the timeout to decay x 11 we can be pretty sure
+				// the value is down at least -96dB.
+				// http://webaudio.github.io/web-audio-api/#widl-AudioParam-setTargetAtTime-void-float-target-double-startTime-float-timeConstant
+				this.stopTime = time + Math.ceil(decay * 11);
+				this.gain.gain.setTargetAtTime(0, time, decay);
+				this.source.stop(this.stopTime);
+			//}
+		},
+
+		cancel: function(time) {
+			this.gain.disconnect();
+			this.gain.gain.cancelScheduledValues(time);
+			this.gain.gain.setValueAtTime(0, time);
+			this.source.stop(time);
+			this.stopTime = this.startTime;
 		}
 	});
 
@@ -271,13 +319,15 @@
 	// Sampler
 
 	function start(time, number, velocity, audio, object, destination, regions, notes, filters, frequency, q, buffers, options) {
+		
 		// Store the currently playing nodes until we know
 		// how quickly they should be muted.
 		var currentNodes = notes[number].slice();
 		var n = regions.length;
 		var minMute = Infinity;
-		var region, regionGain, regionDetune, buffer, note, filter, sensitivity, velocityGain,
-			noteFollow, noteFactor, veloFollow;
+		var region, regionGain, regionDetune, buffer, voice, filter, sensitivity, velocityGain,
+			noteFollow, noteFactor, veloFollow, entry;
+		var voices = [];
 
 		// Empty the array ready for the new packets
 		notes[number].length = 0;
@@ -305,7 +355,7 @@
 			buffer = buffers[n];
 
 			if (!buffer) {
-				console.log('Soundstage sampler: No buffer for region', n, region.url);
+//				console.log('AO Sampler: No buffer for region', n, region.url);
 				continue;
 			}
 
@@ -320,25 +370,69 @@
 			velocityGain = sensitivity * velocity * velocity + 1 - sensitivity;
 			regionDetune = rangeDetune(region, number);
 
-			note = Voice(audio, buffer, region.loop, destination, options);
-			note.start(time, regionGain * velocityGain, regionDetune);
+			voice = Voice(audio, buffer, region.loop, destination, options);
+			voice.start(time, regionGain * velocityGain, regionDetune);
+			entry = [region, voice];
+			voices.push(entry);
 
 			// Store the region and associated nodes, that we may
 			// dispose of them elegantly later.
-			notes[number].push([region, note]);
+			notes[number].push(entry);
 
 			if (isDefined(region.muteDecay) && region.muteDecay < minMute) {
 				minMute = region.muteDecay;
 			}
 		}
 
+		if (voices.length === 0) { return; }
+
 		if (minMute < Infinity) {
 			// Mute nodes currently playing at this number
 			muteNote(time, currentNodes, minMute);
 		}
+
+		return {
+			stop: function(time, name) {
+				dampNote(time, voices);
+
+				// Remove entries for these voices - although this prevents us
+				// being able to mute them during damping phase, and we may want
+				// an additional buffer to handle that.
+
+				var packets = notes[number];
+				var i, voice;
+
+				if (packets) {
+					for (voice of voices) {
+						i = packets.indexOf(voice);
+						if (i > -1) {
+							packets.splice(i, 1);
+						}
+					}
+				}
+
+				if (filter) { filter.stop(time); }
+			},
+
+			cancel: function(time) {
+				voices.map(get1).forEach(invoke('cancel', arguments));
+
+				var packets = notes[number];
+				var i, voice;
+
+				if (packets) {
+					for (voice of voices) {
+						i = packets.indexOf(voice);
+						if (i > -1) {
+							packets.splice(i, 1);
+						}
+					}
+				}
+			}
+		};
 	}
 
-	function Sampler(audio, settings, presets) {
+	function Sampler(audio, settings, sequencer, presets) {
 		if (!AudioObject.isAudioObject(this)) {
 			return new Sampler(audio, settings, presets);
 		}
@@ -348,7 +442,7 @@
 		var object = this;
 		var regions;
 
-		var unityNode  = AudioObject.UnityNode(audio);
+		var unityNode  = UnityNode(audio);
 		var pitchNode  = audio.createGain();
 		//var detuneNode = audio.createGain();
 		var frequency  = audio.createGain();
@@ -451,10 +545,9 @@
 			time = time || audio.currentTime;
 
 			if (velocity === 0) { return; }
-
 			if (!notes[number]) { notes[number] = []; }
-			start(time, number, velocity, audio, this, output, regions, notes, filters, frequency, q, buffers, options);
-			return this;
+
+			return start(time, number, velocity, audio, this, output, regions, notes, filters, frequency, q, buffers, options);
 		};
 
 		this.stop = function stop(time, number) {
@@ -474,7 +567,7 @@
 			packets.length = 0;
 
 			var packet = filters[number];
-			if (!Fn.get('length', packet)) { return this; }
+			if (!get('length', packet)) { return this; }
 			var filter = packet[0];
 			filter.stop(time || audio.currentTime);
 			packet.length = 0;
@@ -506,4 +599,4 @@
 	Sampler.prototype = Object.create(AudioObject.prototype);
 
 	AudioObject.Sampler = Sampler;
-})(window);
+})(this);

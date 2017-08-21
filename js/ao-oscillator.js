@@ -5,6 +5,7 @@
 
 	var Fn          = window.Fn;
 	var AudioObject = window.AudioObject;
+	var Pool        = window.Pool;
 	var observe     = window.observe;
 
 	// Todo: move the function out of midi-utils into a more generic library.
@@ -51,7 +52,7 @@
 //		};
 //	}
 
-	var Voice = Fn.Pool({
+	var Voice = Pool({
 		name: "Oscillator Voice",
 
 		create: function(audio, number, destination, options) {
