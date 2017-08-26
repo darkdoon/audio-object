@@ -1,4 +1,4 @@
-//import AudioObject from './audio-object';
+import sampleMaps from './ao-sampler/sample-maps/index.js';
 
 const DEBUG       = window.DEBUG;
 
@@ -273,7 +273,7 @@ var Voice = Pool({
 		var audio = note.audio;
 		// currentTime is the start of the next 128 sample frame, so add a
 		// frame duration to stopTime before comparing.
-		return audio.currentTime > note.stopTime + 128 / audio.sampleRate;
+		return audio.currentTime > note.stopTime + (128 / audio.sampleRate) / audio.sampleRate;
 	}
 }, {
 	start: function(time, gain, detune) {
@@ -468,7 +468,9 @@ function Sampler(audio, settings, sequencer, presets) {
 	}
 
 	function updateSampleMap() {
-		var sampleMap = AudioObject.presets.find(object['sample-map']);
+		var sampleMap = sampleMaps.find(function(map) {
+			map.slug = object['sample-map'];
+		});
 
 		if (!sampleMap) {
 			if (debug) { console.log('Soundstage sampler:', object['sample-map'], 'is not in presets.'); }
