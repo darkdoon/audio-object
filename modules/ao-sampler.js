@@ -433,9 +433,9 @@ function start(time, number, velocity, audio, object, destination, regions, note
 	};
 }
 
-function Sampler(audio, settings, sequencer, presets) {
+function Sampler(audio, settings, sequencer) {
 	if (!AudioObject.isAudioObject(this)) {
-		return new Sampler(audio, settings, presets);
+		return new Sampler(audio, settings);
 	}
 
 	var options = assign({}, defaults, settings);
@@ -592,7 +592,7 @@ function Sampler(audio, settings, sequencer, presets) {
 		},
 
 		"sample-maps": {
-			value: presets.sub({ type: 'sample-map' })
+			value: []
 		}
 	});
 

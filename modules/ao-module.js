@@ -3,7 +3,7 @@
 const Audioobject = window.AudioObject;
 const assign      = Object.assign;
 
-function Module(audio, settings, sequencer) {
+function Module(audio, settings, stage) {
 	this.start = function(time, name, velocity) {
 		console.log('module.start()', time, name, velocity);
 	};

@@ -60,7 +60,7 @@
 		return n * (Math.random() + Math.random() - 1);
 	}
 
-	function ToneSynth(audio, settings, sequencer, presets) {
+	function ToneSynth(audio, settings) {
 		var options = assign({}, defaults, settings);
 		var object = this;
 		var outputNode = audio.createGain();
