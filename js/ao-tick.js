@@ -32,7 +32,7 @@
 			return new Tick(audio, options);
 		}
 
-		var settings   = assign({}, Tick.defaults, options);
+		var settings   = assign({}, defaults, options);
 
 		var oscillator = audio.createOscillator();
 		var filter     = audio.createBiquadFilter();
